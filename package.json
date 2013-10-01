@@ -1,0 +1,46 @@
+{
+  "name": "automerger",
+  "version": "0.1.1",
+  "description": "ERROR: No README.md file found!",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "cw": "node_modules/.bin/coffee -o lib -cw src",
+    "test": "./node_modules/.bin/mocha",
+    "start": "node index.js",
+    "dev": "NODE_ENV=development supervisor -n exit -i public -e js,coffee index"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Interlincx/automerger.git"
+  },
+  "contributors": [
+    {
+      "name": "Tom Hummel",
+      "email": "tom@interlincx.com"
+    },
+    {
+      "name": "David Guttman"
+    }
+  ],
+  "license": "BSD",
+  "dependencies": {
+    "deep-extend": "0.2.6",
+    "underscore": "1.5.2",
+    "event-stream": "3.0.16",
+    "coffee-script": "1.6.3"
+  },
+  "devDependencies": {
+    "chai": "~1.8.0",
+    "mocha": "~1.13.0"
+  },
+  "readme": "## Auto Merger\n\nStreaming ETL\n\n### Test\n\n    bin/test\n\n### Install\n\n    npm install automerger\n\n### Usage\n\n    AM = require 'automerger'\n    ",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/Interlincx/automerger/issues"
+  },
+  "_id": "automerger@0.1.1",
+  "_from": "automerger@"
+}
