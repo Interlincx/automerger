@@ -1,3 +1,9 @@
+0.2.0 / 2013-10-01
+==================
+
+  - removed underscore dep
+  - fixed module to use via 'require'
+
 0.1.1 / 2013-09-30
 ==================
 
