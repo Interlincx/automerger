@@ -5,18 +5,19 @@ Strategies = require "../src/strategies"
 
 describe "AutoMerger", ->
   describe "Class", ->
+    it "should instantiate", ->
     
-    args = 
-      db: 
-        name: ""
-      model:
-        emit: ->
-      sourceStream:
-        pipe: ->
-        resume: ->
+      args = 
+        db: 
+          name: ""
+        model:
+          emit: ->
+        sourceStream:
+          pipe: ->
+          resume: ->
 
-    am = new AutoMerger args
-    assert.ok am
+      am = new AutoMerger args
+      assert.ok am
 
   describe "Strategies", ->
 
