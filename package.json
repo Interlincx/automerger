@@ -12,10 +12,18 @@
     "start": "node index.js",
     "dev": "NODE_ENV=development supervisor -n exit -i public -e js,coffee index"
   },
-  "repository": "https://github.com/Interlincx/automerger.git",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Interlincx/automerger.git"
+  },
   "contributors": [
-    "Tom Hummel",
-    "David Guttman"
+    {
+      "name": "Tom Hummel",
+      "email": "tom@interlincx.com"
+    },
+    {
+      "name": "David Guttman"
+    }
   ],
   "license": "BSD",
   "dependencies": {
@@ -27,4 +35,12 @@
     "chai": "~1.8.0",
     "mocha": "~1.13.0"
   }
+  },
+  "readme": "## Auto Merger\n\nStreaming ETL\n\n### Test\n\n    bin/test\n\n### Install\n\n    npm install automerger\n\n### Usage\n\n    AM = require 'automerger'\n    ",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/Interlincx/automerger/issues"
+  },
+  "_id": "automerger@0.1.1",
+  "_from": "automerger@"
 }
