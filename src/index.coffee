@@ -7,7 +7,6 @@ strategies = require './strategies'
 
 class AutoMerger
   constructor: (opts) ->
-    _.bindAll this
 
     @db = opts.db
     @model = opts.model

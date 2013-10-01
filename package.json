@@ -28,7 +28,6 @@
   "license": "BSD",
   "dependencies": {
     "deep-extend": "0.2.6",
-    "underscore": "1.5.2",
     "event-stream": "3.0.16",
     "coffee-script": "1.6.3"
   },

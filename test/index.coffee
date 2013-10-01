@@ -4,6 +4,20 @@ AutoMerger = require "../src/index"
 Strategies = require "../src/strategies"
 
 describe "AutoMerger", ->
+  describe "Class", ->
+    
+    args = 
+      db: 
+        name: ""
+      model:
+        emit: ->
+      sourceStream:
+        pipe: ->
+        resume: ->
+
+    am = new AutoMerger args
+    assert.ok am
+
   describe "Strategies", ->
 
     it "assign primitive no change", ->
