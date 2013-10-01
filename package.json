@@ -12,8 +12,11 @@
     "start": "node index.js",
     "dev": "NODE_ENV=development supervisor -n exit -i public -e js,coffee index"
   },
-  "repository": "",
-  "author": "",
+  "repository": "https://github.com/Interlincx/automerger.git",
+  "contributors": [
+    "Tom Hummel <tom@interlincx.com>",
+    "David Guttman"
+  ],
   "license": "BSD",
   "dependencies": {
     "deep-extend": "0.2.6",
