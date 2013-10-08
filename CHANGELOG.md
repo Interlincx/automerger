@@ -1,3 +1,8 @@
+0.2.2 / 2013-10-08
+==================
+  
+  - still need underscore dep for strategies. added
+
 0.2.1 / 2013-10-01
 ==================
   
