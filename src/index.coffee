@@ -145,12 +145,12 @@ class AutoMerger
     @db.find id, (err, doc) ->
 
       if doc
-        doc.updated_at = new Date
+        doc.updatedAt = new Date
         prevTarget = deepExtend {}, doc
         curTarget = doc
       else
         prevTarget = null
-        curTarget = {_id: id, created_at: new Date}
+        curTarget = {_id: id, createdAt: new Date}
 
       callback err, curTarget, prevTarget
 
@@ -158,11 +158,11 @@ class AutoMerger
 
     curTarget.version = @version
 
-    if curTarget.created_at? and typeof curTarget.created_at is "string"
-      curTarget.created_at = new Date(curTarget.created_at)
+    if curTarget.createdAt? and typeof curTarget.createdAt is "string"
+      curTarget.createdAt = new Date(curTarget.createdAt)
 
-    if curTarget.updated_at? and typeof curTarget.updated_at is "string"
-      curTarget.updated_at = new Date(curTarget.updated_at)
+    if curTarget.updatedAt? and typeof curTarget.updatedAt is "string"
+      curTarget.updatedAt = new Date(curTarget.updatedAt)
 
     @db.upsert curTarget._id, curTarget, callback
 
