@@ -29,7 +29,8 @@
   "dependencies": {
     "deep-extend": "0.2.6",
     "event-stream": "3.0.16",
-    "coffee-script": "1.6.3"
+    "coffee-script": "1.6.3",
+    "underscore": "~1.5.2"
   },
   "devDependencies": {
     "chai": "~1.8.0",
