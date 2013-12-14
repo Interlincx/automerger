@@ -173,7 +173,7 @@ class AutoMerger
 
     return null unless valid
 
-    key = pieces.join "_"
+    key = pieces.join "!"
     return key
 
   checkIsReady: (target) ->
