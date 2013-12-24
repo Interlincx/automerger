@@ -1,4 +1,7 @@
 assert = require("chai").assert
+{EventEmitter} = require "events"
+redis = require "fakeredis"
+es = require "event-stream"
 
 AutoMerger = require "../src/index"
 Strategies = require "../src/strategies"
@@ -10,14 +13,64 @@ describe "AutoMerger", ->
       args = 
         db: 
           name: ""
-        model:
-          emit: ->
+        model: new EventEmitter
         sourceStream:
           pipe: ->
           resume: ->
 
       am = new AutoMerger args
       assert.ok am
+
+    it "should push to subscribers", (done) ->
+      rc = redis.createClient()
+
+      args = 
+        db: 
+          name: "test-model"
+          find: (id, cb) -> cb null, null
+          upsert: (id, doc, cb) -> cb null
+        model: new EventEmitter
+        redis: rc
+        sourceStream: es.through (data) -> @queue data
+        sourceToIdPieces: (doc) -> 
+          [doc.type, doc.field]
+        subscriptions: [
+          ["dest1"]
+          [
+            "filtered-sub"
+            (doc) -> 
+              allow = doc.type is "allowed"
+              return allow
+          ]
+        ]
+        schema: ["type", "field"]
+        version: "test-version"
+
+      am = new AutoMerger args
+
+      sourceDoc = 
+        current: {type: "none", field: "name"}
+
+      am.sourceStream.write sourceDoc
+
+      rc.blpop "dest1", 0, (err, res) ->
+        assert.isNull err
+
+        queueName = res[0]
+        assert.equal queueName, "dest1"
+        
+        subJob = JSON.parse res[1]
+        assert.equal subJob.action, "create"
+        assert.equal subJob.name, "test-model"
+
+        doc = subJob.current
+        assert.equal doc._id, "none!name"
+        assert.ok doc.createdAt
+        assert.equal doc.type, "none"
+        assert.equal doc.field, "name"
+        assert.equal doc.version, "test-version"
+
+        done()
 
   describe "Strategies", ->
 
