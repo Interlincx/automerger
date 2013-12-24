@@ -1,16 +1,17 @@
 assert = require("chai").assert
-{EventEmitter} = require "events"
-redis = require "fakeredis"
+
 es = require "event-stream"
+redis = require "fakeredis"
 
 AutoMerger = require "../src/index"
 Strategies = require "../src/strategies"
 
+getBasicConfig = require "./fixtures/basic-config"
+
 describe "AutoMerger", ->
   describe "Class", ->
     it "should instantiate", ->
-    
-      args = 
+      minViableConfig = 
         db: 
           name: ""
         model: new EventEmitter
@@ -18,35 +19,15 @@ describe "AutoMerger", ->
           pipe: ->
           resume: ->
 
-      am = new AutoMerger args
+      am = new AutoMerger minViableConfig
       assert.ok am
 
     it "should push to subscribers", (done) ->
-      rc = redis.createClient()
 
-      args = 
-        db: 
-          name: "test-model"
-          find: (id, cb) -> cb null, null
-          upsert: (id, doc, cb) -> cb null
-        model: new EventEmitter
-        redis: rc
-        sourceStream: es.through (data) -> @queue data
-        sourceToIdPieces: (doc) -> 
-          [doc.type, doc.field]
-        subscriptions: [
-          ["dest1"]
-          [
-            "filtered-sub"
-            (doc) -> 
-              allow = doc.type is "allowed"
-              return allow
-          ]
-        ]
-        schema: ["type", "field"]
-        version: "test-version"
+      conf = getBasicConfig()
+      conf.redis = rc = redis.createClient()
+      am = new AutoMerger conf
 
-      am = new AutoMerger args
 
       sourceDoc = 
         current: {type: "none", field: "name"}
@@ -69,6 +50,32 @@ describe "AutoMerger", ->
         assert.equal doc.type, "none"
         assert.equal doc.field, "name"
         assert.equal doc.version, "test-version"
+
+        done()
+
+    it.only "should stop emitting after destroy", (done) ->
+      conf = getBasicConfig()
+      conf.redis = redis.createClient "destroy-test"
+      am = new AutoMerger conf
+
+      am.destroy()
+
+      sourceDoc = 
+        current: {type: "none", field: "name"}
+
+      am.sourceStream.write sourceDoc
+
+      rc = redis.createClient "destroy-test"
+
+      rc.blpop "dest1", 1, (err, res) ->
+        assert.isNull err
+        assert.isNull res
+
+        assert.isFalse am.sourceStream.readable
+        assert.isFalse am.sourceStream.writable
+
+        assert.isFalse am.targetStream.readable
+        assert.isFalse am.targetStream.writable
 
         done()
 
