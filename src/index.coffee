@@ -28,6 +28,11 @@ class AutoMerger
     @sourceStream.pipe @targetStream
     @sourceStream.resume()
 
+  destroy: ->
+    @targetStream.destroy()
+    @sourceStream.destroy()
+    @redis.quit()
+
   patchModel: ->
     name = @db.name
     oldEmit = @model.emit
