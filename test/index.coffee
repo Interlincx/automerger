@@ -1,4 +1,5 @@
 assert = require("chai").assert
+{EventEmitter} = require "events"
 
 es = require "event-stream"
 redis = require "fakeredis"
@@ -53,7 +54,7 @@ describe "AutoMerger", ->
 
         done()
 
-    it.only "should stop emitting after destroy", (done) ->
+    it "should stop emitting after destroy", (done) ->
       conf = getBasicConfig()
       conf.redis = redis.createClient "destroy-test"
       am = new AutoMerger conf
