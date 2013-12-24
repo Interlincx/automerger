@@ -24,9 +24,14 @@ class AutoMerger
 
     @patchModel()
 
-    targetStream = @createTargetStream()
-    @sourceStream.pipe targetStream
+    @targetStream = @createTargetStream()
+    @sourceStream.pipe @targetStream
     @sourceStream.resume()
+
+  destroy: ->
+    @targetStream.destroy()
+    @sourceStream.destroy()
+    @redis.quit()
 
   patchModel: ->
     name = @db.name
@@ -65,11 +70,13 @@ class AutoMerger
       subQueue = subscription[0]
       filter = subscription[1]
 
+    jobStr = JSON.stringify job
+
     if not filter?
-      @redis.rpush subQueue, (JSON.stringify job)
+      @redis.rpush subQueue, jobStr
     else
       if filter job.current
-        @redis.rpush subQueue, (JSON.stringify job)
+        @redis.rpush subQueue, jobStr
 
 
   getStrategy: (item) ->
@@ -219,8 +226,7 @@ class AutoMerger
     unless id?
       callback()
       return @model.emit "reject", curSource
-      
-
+    
     @getTargets id, (err, curTarget, prevTarget) =>
 
       mergeOpts = 

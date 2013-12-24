@@ -1,3 +1,12 @@
+0.4.0 / 2013-12-24
+==================
+
+  - added instance method #destroy()
+    - destroys streams & quits redis conn
+    - test
+  - wrote test with the minimum possible config to get output
+  - readme: added usage example based on mvp test
+
 0.3.0 / 2013-12-13
 ==================
   
