@@ -29,6 +29,7 @@ class AutoMerger
     @sourceStream.resume()
 
   destroy: ->
+    @model.removeAllListeners()
     @targetStream.destroy()
     @sourceStream.destroy()
     @redis.quit()
