@@ -24,8 +24,8 @@ class AutoMerger
 
     @patchModel()
 
-    targetStream = @createTargetStream()
-    @sourceStream.pipe targetStream
+    @targetStream = @createTargetStream()
+    @sourceStream.pipe @targetStream
     @sourceStream.resume()
 
   patchModel: ->
