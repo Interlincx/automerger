@@ -244,15 +244,16 @@ class AutoMerger
 
           if err
             console.error err
-            model.emit 'error', err
             callback err
+            model.emit 'error', err
           else
             if action is "create"
+              callback()
               model.emit action, curTarget
-              callback()
             else              
-              model.emit action, curTarget, prevTarget
               callback()
+              model.emit action, curTarget, prevTarget
+              
       else
         @model.emit "reject", curSource
         callback()
