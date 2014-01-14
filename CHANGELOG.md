@@ -1,3 +1,8 @@
+0.5.0 / 2014-01-14
+==================
+
+  - release worker before publishing to subscribers
+
 0.4.0 / 2013-12-24
 ==================
 
