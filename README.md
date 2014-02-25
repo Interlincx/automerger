@@ -2,6 +2,10 @@
 
 Streaming ETL
 
+[![Build Status](https://travis-ci.org/Interlincx/automerger.png)](https://travis-ci.org/Interlincx/automerger)
+[![NPM](https://nodei.co/npm/automerger.png)](https://nodei.co/npm/automerger/)
+
+
 ### Test
 
     bin/test
