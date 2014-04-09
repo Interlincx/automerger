@@ -1,3 +1,9 @@
+0.5.1 / 2014-04-09
+==================
+
+  - fix for 'keyed_count' strategy
+  - split tests up into separate files
+
 0.5.0 / 2014-01-14
 ==================
 
