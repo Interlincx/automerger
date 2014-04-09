@@ -165,9 +165,10 @@ set = (opts) ->
 keyed_count = (opts) ->
   {sourceValue, targetKey, target, current, previous} = opts
   changed = false
-  
+
   currentVal = sourceValue current
-  prevVal = sourceValue previous
+  if previous and previous[targetKey]
+    prevVal = sourceValue previous
 
   counts = target[targetKey] ?= {}
 
@@ -175,20 +176,19 @@ keyed_count = (opts) ->
     counts[currentVal] ?= 0
     counts[currentVal] += 1
     changed = true
-  
-  if prevVal isnt currentVal
-  
+
+  else if prevVal isnt currentVal
     counts[currentVal] ?= 0
     counts[currentVal] += 1
 
-    counts[prevVal] ?= 1
-    counts[prevVal] -= 1
+    counts[prevVal] ?= 1 if prevVal?
+    counts[prevVal] -= 1 if prevVal?
 
     changed = true
 
   return changed
 
-module.exports = 
+module.exports =
   assign: assign
   target_assign: target_assign
   sum: sum
