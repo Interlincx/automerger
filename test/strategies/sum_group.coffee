@@ -2,7 +2,7 @@ assert = require("chai").assert
 Strategies = require "../../src/strategies"
 
 describe 'Sum Group', ->
-  it "sum_group no change", ->
+  it "no change", ->
     opts =
       sourceValue: (source) -> source.val
       targetKey: "val"
@@ -13,7 +13,7 @@ describe 'Sum Group', ->
     hasChanged = Strategies.sum_group opts
     assert.isFalse hasChanged
 
-  it "sum_group change", ->
+  it "change", ->
     opts =
       sourceValue: (source) -> source.val
       targetKey: "val"
