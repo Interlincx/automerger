@@ -11,3 +11,4 @@ describe "Strategies", ->
   require './strategies/assign_group'
   require './strategies/target_assign'
   require './strategies/first'
+  require './strategies/keyed_count'
