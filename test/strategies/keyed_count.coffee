@@ -1,7 +1,7 @@
 assert = require("chai").assert
 Strategies = require "../../src/strategies"
 
-describe.only 'Keyed Count', ->
+describe 'Keyed Count', ->
   it "new doc", ->
     strategy = "keyed_count"
     opts =
