@@ -1,7 +1,7 @@
-assert = require("chai").assert
-Strategies = require "../src/strategies"
+assert = require('chai').assert
+Strategies = require '../src/strategies'
 
-describe "Strategies", ->
+describe 'Strategies', ->
   require './strategies/assign'
   require './strategies/sum'
   require './strategies/sum_group'

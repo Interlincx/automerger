@@ -1,15 +1,15 @@
-assert = require("chai").assert
-{EventEmitter} = require "events"
+assert = require('chai').assert
+{EventEmitter} = require 'events'
 
-AutoMerger = require "../src/index"
-getBasicConfig = require "./fixtures/basic-config"
-redis = require "fakeredis"
+AutoMerger = require '../src/index'
+getBasicConfig = require './fixtures/basic-config'
+redis = require 'fakeredis'
 
-describe "AutoMerger", ->
-  it "should instantiate", ->
+describe 'AutoMerger', ->
+  it 'should instantiate', ->
     minViableConfig =
       db:
-        name: ""
+        name: ''
       model: new EventEmitter
       sourceStream:
         pipe: ->
@@ -18,7 +18,7 @@ describe "AutoMerger", ->
     am = new AutoMerger minViableConfig
     assert.ok am
 
-  it "should push to subscribers", (done) ->
+  it 'should push to subscribers', (done) ->
 
     conf = getBasicConfig()
     conf.redis = rc = redis.createClient()
@@ -26,44 +26,44 @@ describe "AutoMerger", ->
 
 
     sourceDoc =
-      current: {type: "none", field: "name"}
+      current: {type: 'none", field: "name'}
 
     am.sourceStream.write sourceDoc
 
-    rc.blpop "dest1", 0, (err, res) ->
+    rc.blpop 'dest1', 0, (err, res) ->
       assert.isNull err
 
       queueName = res[0]
-      assert.equal queueName, "dest1"
+      assert.equal queueName, 'dest1'
 
       subJob = JSON.parse res[1]
-      assert.equal subJob.action, "create"
-      assert.equal subJob.name, "test-model"
+      assert.equal subJob.action, 'create'
+      assert.equal subJob.name, 'test-model'
 
       doc = subJob.current
-      assert.equal doc._id, "none!name"
+      assert.equal doc._id, 'none!name'
       assert.ok doc.createdAt
-      assert.equal doc.type, "none"
-      assert.equal doc.field, "name"
-      assert.equal doc.version, "test-version"
+      assert.equal doc.type, 'none'
+      assert.equal doc.field, 'name'
+      assert.equal doc.version, 'test-version'
 
       done()
 
-  it "should stop emitting after destroy", (done) ->
+  it 'should stop emitting after destroy', (done) ->
     conf = getBasicConfig()
-    conf.redis = redis.createClient "destroy-test"
+    conf.redis = redis.createClient 'destroy-test'
     am = new AutoMerger conf
 
     am.destroy()
 
     sourceDoc =
-      current: {type: "none", field: "name"}
+      current: {type: 'none", field: "name'}
 
     am.sourceStream.write sourceDoc
 
-    rc = redis.createClient "destroy-test"
+    rc = redis.createClient 'destroy-test'
 
-    rc.blpop "dest1", 1, (err, res) ->
+    rc.blpop 'dest1', 1, (err, res) ->
       assert.isNull err
       assert.isNull res
 

@@ -44,7 +44,7 @@ class AutoMerger
           current: current
           previous: previous
           name: name
-        
+
         @publishJob job
 
       oldEmit.apply @model, Array::slice.call(arguments, 0)
@@ -97,7 +97,7 @@ class AutoMerger
     return targetKey
 
   runStrategyWithTargetKey: (strategyOpts, targetKey, target, strategy) ->
-    namePieces = targetKey.split "." 
+    namePieces = targetKey.split "."
     strategyOpts.targetKey = targetKey
 
     if namePieces.length is 1
@@ -120,7 +120,7 @@ class AutoMerger
     else if typeof item is "function"
       item = schema.functionToObject item
 
-    strategyOpts = 
+    strategyOpts =
       sourceValue: item.sourceValue
       targetValue: item.targetValue
       current: current
@@ -217,7 +217,7 @@ class AutoMerger
       if @rejectSource curSource
         callback()
         return @model.emit "reject", curSource
-        
+
 
     @alterSource curSource if @alterSource?
 
@@ -227,10 +227,10 @@ class AutoMerger
     unless id?
       callback()
       return @model.emit "reject", curSource
-    
+
     @getTargets id, (err, curTarget, prevTarget) =>
 
-      mergeOpts = 
+      mergeOpts =
         target: curTarget
         curSource: curSource
         prevSource: prevSource
@@ -250,10 +250,10 @@ class AutoMerger
             if action is "create"
               callback()
               model.emit action, curTarget
-            else              
+            else
               callback()
               model.emit action, curTarget, prevTarget
-              
+
       else
         @model.emit "reject", curSource
         callback()
