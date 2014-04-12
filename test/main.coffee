@@ -26,7 +26,7 @@ describe 'AutoMerger', ->
 
 
     sourceDoc =
-      current: {type: 'none", field: "name'}
+      current: {type: 'none', field: 'name'}
 
     am.sourceStream.write sourceDoc
 
@@ -57,7 +57,7 @@ describe 'AutoMerger', ->
     am.destroy()
 
     sourceDoc =
-      current: {type: 'none", field: "name'}
+      current: {type: 'none', field: 'name'}
 
     am.sourceStream.write sourceDoc
 
