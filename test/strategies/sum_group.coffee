@@ -1,11 +1,11 @@
-assert = require("chai").assert
-Strategies = require "../../src/strategies"
+assert = require('chai').assert
+Strategies = require '../../src/strategies'
 
 describe 'Sum Group', ->
-  it "no change", ->
+  it 'no change', ->
     opts =
       sourceValue: (source) -> source.val
-      targetKey: "val"
+      targetKey: 'val'
       target: {val: {clicks: 25, impressions: 50}}
       current: {val: {clicks: 1, impressions: 1}}
       previous: {val: {clicks: 1, impressions: 1}}
@@ -13,10 +13,10 @@ describe 'Sum Group', ->
     hasChanged = Strategies.sum_group opts
     assert.isFalse hasChanged
 
-  it "change", ->
+  it 'change', ->
     opts =
       sourceValue: (source) -> source.val
-      targetKey: "val"
+      targetKey: 'val'
       target: {val: {clicks: 25, impressions: 50}}
       current: {val: {clicks: 2, impressions: 2}}
       previous: {val: {clicks: 1, impressions: 1}}
