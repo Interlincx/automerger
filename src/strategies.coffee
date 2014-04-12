@@ -1,4 +1,4 @@
-_          = require "underscore"
+_          = require 'underscore'
 
 assign = (opts) ->
   {sourceValue, targetKey, target, current} = opts
@@ -7,10 +7,10 @@ assign = (opts) ->
   value = sourceValue current
   if value?
     orig = target[targetKey]
-    target[targetKey] = value 
+    target[targetKey] = value
 
 
-    if typeof value is "object" 
+    if typeof value is 'object'
       unless _.isEqual orig, value
         changed = true
 
@@ -27,9 +27,9 @@ target_assign = (opts) ->
   value = targetValue target
   if value?
     orig = target[targetKey]
-    target[targetKey] = value 
+    target[targetKey] = value
 
-    if typeof value is "object" 
+    if typeof value is 'object'
       unless _.isEqual orig, value
         changed = true
 
@@ -65,7 +65,7 @@ sum_group = (opts) ->
 
   curGroup = (sourceValue current) or {}
   prevGroup = sourceValue previous if previous?
-  
+
   tBase = target[targetKey] ?= {}
 
   for key, curVal of curGroup
@@ -87,7 +87,7 @@ assign_group = (opts) ->
 
   curGroup = (sourceValue current) or {}
   prevGroup = sourceValue previous if previous?
-  
+
   tBase = target[targetKey] ?= {}
 
   for key, curVal of curGroup
@@ -157,7 +157,7 @@ set = (opts) ->
     target[targetKey] ?= []
 
     unless value in target[targetKey]
-      target[targetKey].push value 
+      target[targetKey].push value
       changed = true
 
   return changed
