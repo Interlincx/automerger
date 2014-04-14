@@ -1,3 +1,10 @@
+
+0.6.0 / 2014-04-14
+==================
+
+ * added optional `migrator` function that will be run on all loaded target documents if defined
+ * style: fix quotes + whitespace
+
 0.5.1 / 2014-04-09
 ==================
 
