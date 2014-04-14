@@ -3,6 +3,7 @@ assert = require('chai').assert
 
 AutoMerger = require '../src/index'
 getBasicConfig = require './fixtures/basic-config'
+getUpdateConfig = require './fixtures/config-with-target-doc'
 redis = require 'fakeredis'
 
 describe 'AutoMerger', ->
@@ -74,3 +75,19 @@ describe 'AutoMerger', ->
       assert.isFalse am.targetStream.writable
 
       done()
+
+  it 'should migrate', (done) ->
+    conf = getUpdateConfig()
+    conf.redis = redis.createClient 'migrate-test'
+
+    conf.migrator = (doc) ->
+      assert.deepEqual doc, { field1: 'ok', another: true }
+      done()
+      return doc
+
+    am = new AutoMerger conf
+
+    sourceDoc =
+      current: {type: 'none', field: 'name'}
+
+    am.sourceStream.write sourceDoc

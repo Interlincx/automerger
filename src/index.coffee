@@ -12,6 +12,8 @@ class AutoMerger
     @model = opts.model
     @sourceStream = opts.sourceStream
 
+    @migrator = opts.migrator
+
     @sourceToIdPieces = opts.sourceToIdPieces
     @schema = opts.schema
     @rejectSource = opts.rejectSource
@@ -150,9 +152,11 @@ class AutoMerger
     return targetChanged
 
   getTargets: (id, callback) ->
+    self = this
     @db.find id, (err, doc) ->
 
       if doc
+        doc = self.migrator doc if self.migrator
         doc.updatedAt = new Date
         prevTarget = deepExtend {}, doc
         curTarget = doc
