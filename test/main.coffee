@@ -145,3 +145,69 @@ describe 'AutoMerger', ->
         nonKeyField: true
 
     am.sourceStream.write sourceDoc
+
+  it 'model should emit "reject" with rejectSource fn', (done) ->
+    conf = getBasicConfig()
+    conf.rejectSource = (doc) -> return true # always reject
+    conf.db.upsert = -> assert.fail 'should not save a rejected document'
+    conf.subscriberStreams.push es.through ->
+      assert.fail 'should not notify subscribers of rejected docs'
+
+    conf.model.on 'reject', (doc) ->
+      console.log "doc: ", doc
+      assert.ok doc, 'rejected document as expected'
+      done()
+
+    am = new AutoMerger conf
+
+    sourceDoc =
+      current:
+        keyPart1: 'none'
+        keyPart2: 'name'
+        nonKeyField: true
+
+    am.sourceStream.write sourceDoc
+
+  it 'model should emit "reject" with incomplete id', (done) ->
+    conf = getBasicConfig()
+    conf.db.upsert = -> assert.fail 'should not save a rejected document'
+    conf.subscriberStreams.push es.through ->
+      assert.fail 'should not notify subscribers of rejected docs'
+
+    conf.model.on 'reject', (doc) ->
+      assert.ok doc, 'rejected document as expected'
+      done()
+
+    am = new AutoMerger conf
+
+    sourceDoc =
+      current:
+        keyPart1: 'none'
+        # keyPart2: 'name' # source is missing keyPart2, an idPiece
+        nonKeyField: true
+
+    am.sourceStream.write sourceDoc
+
+  it 'model should emit "reject" with unchanged target', (done) ->
+    originalTarget = _id: 'none!name', keyPart1: 'none', keyPart2: 'name', createdAt: (new Date).toString()
+
+    conf = getBasicConfig()
+
+    conf.db.find = (id, cb) -> cb null, originalTarget
+    conf.db.upsert = -> assert.fail 'should not save a rejected document'
+
+    conf.subscriberStreams.push es.through ->
+      assert.fail 'should not notify subscribers of rejected docs'
+
+    conf.model.on 'reject', (doc) ->
+      assert.ok doc, 'rejected document as expected'
+      done()
+
+    am = new AutoMerger conf
+
+    sourceDoc =
+      current:
+        keyPart1: 'none'
+        keyPart2: 'name'
+
+    am.sourceStream.write sourceDoc
