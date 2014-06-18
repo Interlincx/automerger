@@ -8,7 +8,7 @@ module.exports = ->
     upsert: (id, doc, cb) -> cb null
   model: new EventEmitter
   sourceStream: es.through (data) -> @queue data
-  sourceToIdPieces: (doc) -> [doc.type, doc.field]
+  sourceToIdPieces: (doc) -> [doc.keyPart1, doc.keyPart2]
   subscriberStreams: []
-  schema: ["type", "field"]
+  schema: ["keyPart1", "keyPart2", "nonKeyField"]
   version: "test-version"

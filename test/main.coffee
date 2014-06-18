@@ -28,8 +28,8 @@ describe 'AutoMerger', ->
       doc = job.current
       assert.equal doc._id, 'none!name'
       assert.ok doc.createdAt
-      assert.equal doc.type, 'none'
-      assert.equal doc.field, 'name'
+      assert.equal doc.keyPart1, 'none'
+      assert.equal doc.keyPart2, 'name'
       assert.equal doc.version, 'test-version'
 
       done()
@@ -40,7 +40,7 @@ describe 'AutoMerger', ->
     am = new AutoMerger conf
 
     sourceDoc =
-      current: {type: 'none', field: 'name'}
+      current: {keyPart1: 'none', keyPart2: 'name'}
 
     am.sourceStream.write sourceDoc
 
@@ -73,7 +73,7 @@ describe 'AutoMerger', ->
     am = new AutoMerger conf
 
     sourceDoc =
-      current: {type: 'none', field: 'name'}
+      current: {keyPart1: 'none', keyPart2: 'name'}
 
     am.sourceStream.write sourceDoc
 
@@ -83,8 +83,8 @@ describe 'AutoMerger', ->
       assert.equal id, 'none!name'
       assert.equal doc._id, 'none!name'
       assert.ok doc.createdAt
-      assert.equal doc.type, 'none'
-      assert.equal doc.field, 'name'
+      assert.equal doc.keyPart1, 'none'
+      assert.equal doc.keyPart2, 'name'
       assert.equal doc.version, 'test-version'
 
       cb null
@@ -101,7 +101,7 @@ describe 'AutoMerger', ->
     am = new AutoMerger conf
 
     sourceDoc =
-      current: {type: 'none', field: 'name'}
+      current: {keyPart1: 'none', keyPart2: 'name'}
 
     am.sourceStream.write sourceDoc
 
@@ -112,7 +112,7 @@ describe 'AutoMerger', ->
     onUpsert = (id, doc, cb) ->
       assert.equal id, 'none!name'
       assert.equal doc._id, 'none!name'
-      assert.equal doc.hello, true # new field was set
+      assert.equal doc.nonKeyField, true # new field was set
       assert.ok doc.createdAt
       assert.ok doc.updatedAt
       assert.equal doc.keyPart1, 'none'
@@ -125,15 +125,13 @@ describe 'AutoMerger', ->
       assert.equal job.action, 'update'
       assert.equal job.name, 'test-model'
 
-      assert.notOk job.previous.hello, 'hello field was NOT defined on original'
+      assert.notOk job.previous.nonKeyField, 'nonKeyField field was NOT defined on original'
       assert.notOk job.previous.updatedAt
-      assert.ok job.current.hello, 'hello field IS defined on current'
+      assert.ok job.current.nonKeyField, 'nonKeyField field IS defined on current'
       assert.ok job.current.updatedAt
       done()
 
     conf = getBasicConfig()
-    conf.sourceToIdPieces = (doc) -> [doc.keyPart1, doc.keyPart2]
-    conf.schema = ["keyPart1", "keyPart2", "hello"]
     conf.db.upsert = onUpsert
     conf.db.find = (id, cb) -> cb null, originalTarget
     conf.subscriberStreams.push es.through onJob
@@ -144,6 +142,6 @@ describe 'AutoMerger', ->
       current:
         keyPart1: 'none'
         keyPart2: 'name'
-        hello: true
+        nonKeyField: true
 
     am.sourceStream.write sourceDoc
