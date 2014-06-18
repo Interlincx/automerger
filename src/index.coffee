@@ -215,7 +215,7 @@ class AutoMerger
             name: self.db.name
 
       else
-        @model.emit "reject", curSource
+        self.model.emit "reject", curSource
         callback()
 
 module.exports = AutoMerger
