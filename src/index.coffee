@@ -16,18 +16,19 @@ class AutoMerger
 
     @sourceToIdPieces = opts.sourceToIdPieces
     @schema = opts.schema
+
     @rejectSource = opts.rejectSource
     @alterSource = opts.alterSource
-    @subscriptions = opts.subscriptions or []
+    @subscriberStreams = opts.subscriberStreams or []
     @parallel = opts.parallel
     @version = opts.version
 
-    @redis = opts.redis
+    @saveStream = es.map @worker.bind this
 
-    @patchModel()
+    for subStream in @subscriberStreams
+      @saveStream.pipe subStream
 
-    @targetStream = @createTargetStream()
-    @sourceStream.pipe @targetStream
+    @sourceStream.pipe @saveStream
     @sourceStream.resume()
 
   destroy: ->
@@ -35,52 +36,6 @@ class AutoMerger
     @targetStream.destroy()
     @sourceStream.destroy()
     @redis.quit()
-
-  patchModel: ->
-    name = @db.name
-    oldEmit = @model.emit
-    @model.emit = (action, current, previous) =>
-      if (action is 'create') or (action is 'update')
-        job =
-          action: action
-          current: current
-          previous: previous
-          name: name
-
-        @publishJob job
-
-      oldEmit.apply @model, Array::slice.call(arguments, 0)
-
-  createTargetStream: ->
-    self = this
-    targetStream = es.through (data) =>
-      targetStream.pause() unless @parallel
-      @worker data, (err) ->
-        console.error err if err
-        targetStream.resume() unless @parallel
-
-    return targetStream
-
-  publishJob: (job) ->
-    @subscriptions.forEach (sub) =>
-      @publishToSubscriber sub, job
-
-  publishToSubscriber: (subscription, job) ->
-    if typeof subscription is 'string'
-      subQueue = subscription
-      filter = null
-    else
-      subQueue = subscription[0]
-      filter = subscription[1]
-
-    jobStr = JSON.stringify job
-
-    if not filter?
-      @redis.rpush subQueue, jobStr
-    else
-      if filter job.current
-        @redis.rpush subQueue, jobStr
-
 
   getStrategy: (item) ->
     if typeof item.strategy is "function"
@@ -213,6 +168,7 @@ class AutoMerger
     return action
 
   worker: (sources, callback) ->
+    self = this
     {current, previous} = sources
     curSource = current
     prevSource = previous
@@ -221,7 +177,6 @@ class AutoMerger
       if @rejectSource curSource
         callback()
         return @model.emit "reject", curSource
-
 
     @alterSource curSource if @alterSource?
 
@@ -232,31 +187,27 @@ class AutoMerger
       callback()
       return @model.emit "reject", curSource
 
-    @getTargets id, (err, curTarget, prevTarget) =>
+    @getTargets id, (err, curTarget, prevTarget) ->
 
       mergeOpts =
         target: curTarget
         curSource: curSource
         prevSource: prevSource
 
-      targetChanged = @merge mergeOpts
+      targetChanged = self.merge mergeOpts
 
       if targetChanged
-        model = @model
-        action = @getAction curTarget, prevTarget
-        @save curTarget, (err) ->
+        model = self.model
+        action = self.getAction curTarget, prevTarget
+        self.save curTarget, (err) ->
 
-          if err
-            console.error err
-            callback err
-            model.emit 'error', err
-          else
-            if action is "create"
-              callback()
-              model.emit action, curTarget
-            else
-              callback()
-              model.emit action, curTarget, prevTarget
+          return callback err if err
+
+          callback null,
+            action: action
+            current: curTarget
+            previous: prevTarget
+            name: self.db.name
 
       else
         @model.emit "reject", curSource

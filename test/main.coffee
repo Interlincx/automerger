@@ -1,10 +1,9 @@
 assert = require('chai').assert
 {EventEmitter} = require 'events'
+es = require "event-stream"
 
 AutoMerger = require '../src/index'
 getBasicConfig = require './fixtures/basic-config'
-getUpdateConfig = require './fixtures/config-with-target-doc'
-redis = require 'fakeredis'
 
 describe 'AutoMerger', ->
   it 'should instantiate', ->
@@ -21,27 +20,12 @@ describe 'AutoMerger', ->
 
   it 'should push to subscribers', (done) ->
 
-    conf = getBasicConfig()
-    conf.redis = rc = redis.createClient()
-    am = new AutoMerger conf
+    onJob = (job) ->
 
+      assert.equal job.action, 'create'
+      assert.equal job.name, 'test-model'
 
-    sourceDoc =
-      current: {type: 'none', field: 'name'}
-
-    am.sourceStream.write sourceDoc
-
-    rc.blpop 'dest1', 0, (err, res) ->
-      assert.isNull err
-
-      queueName = res[0]
-      assert.equal queueName, 'dest1'
-
-      subJob = JSON.parse res[1]
-      assert.equal subJob.action, 'create'
-      assert.equal subJob.name, 'test-model'
-
-      doc = subJob.current
+      doc = job.current
       assert.equal doc._id, 'none!name'
       assert.ok doc.createdAt
       assert.equal doc.type, 'none'
@@ -50,39 +34,40 @@ describe 'AutoMerger', ->
 
       done()
 
-  it 'should stop emitting after destroy', (done) ->
     conf = getBasicConfig()
-    conf.redis = redis.createClient 'destroy-test'
-    am = new AutoMerger conf
+    conf.subscriberStreams.push es.through onJob
 
-    am.destroy()
+    am = new AutoMerger conf
 
     sourceDoc =
       current: {type: 'none', field: 'name'}
 
     am.sourceStream.write sourceDoc
 
-    rc = redis.createClient 'destroy-test'
+  it 'should migrate', (done) ->
+    conf = getBasicConfig()
+    existingDoc = {field1: 'ok', another: true}
 
-    rc.blpop 'dest1', 1, (err, res) ->
-      assert.isNull err
-      assert.isNull res
+    # an existing document is returned by `find`
+    conf.db.find = (id, cb) -> cb null, existingDoc
 
-      assert.isFalse am.sourceStream.readable
-      assert.isFalse am.sourceStream.writable
-
-      assert.isFalse am.targetStream.readable
-      assert.isFalse am.targetStream.writable
+    conf.subscriberStreams.push es.through (job) ->
+      # subscriptionStream receives the migrated document
+      assert.equal job.current.field2, 'sure'
+      assert.equal job.current.field3, true
 
       done()
-
-  it 'should migrate', (done) ->
-    conf = getUpdateConfig()
-    conf.redis = redis.createClient 'migrate-test'
 
     conf.migrator = (doc) ->
-      assert.deepEqual doc, { field1: 'ok', another: true }
-      done()
+      # check initial state
+      assert.deepEqual doc, existingDoc
+
+      # do migration
+      delete doc.field1
+      delete doc.another
+      doc.field2 = 'sure'
+      doc.field3 = true
+
       return doc
 
     am = new AutoMerger conf
