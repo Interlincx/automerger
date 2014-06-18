@@ -113,8 +113,8 @@ class AutoMerger
 
       if doc
         doc = self.migrator doc if self.migrator
-        doc.updatedAt = new Date
         prevTarget = deepExtend {}, doc
+        doc.updatedAt = new Date
         curTarget = doc
       else
         prevTarget = null
