@@ -16,6 +16,7 @@ class AutoMerger
 
     @sourceToIdPieces = opts.sourceToIdPieces
     @schema = opts.schema
+    @readyProperties = opts.readyProperties or []
 
     @rejectSource = opts.rejectSource
     @alterSource = opts.alterSource
@@ -145,7 +146,7 @@ class AutoMerger
 
   checkIsReady: (target) ->
     ready = true
-    for prop in @model.readyProperties
+    for prop in @readyProperties
       ready = false unless target[prop]?
 
     return ready
@@ -153,7 +154,7 @@ class AutoMerger
   getAction: (curTarget, prevTarget) ->
     action = if prevTarget then 'update' else 'create'
 
-    if @model.readyProperties?
+    if @readyProperties?.length > 1
       curReady = @checkIsReady curTarget
       prevReady = @checkIsReady prevTarget if prevTarget?
 
@@ -199,9 +200,13 @@ class AutoMerger
       if targetChanged
         model = self.model
         action = self.getAction curTarget, prevTarget
-        self.save curTarget, (err) ->
 
+        self.save curTarget, (err) ->
           return callback err if err
+
+          if action is 'not_ready'
+            # save but do not tell subscribers
+            return callback()
 
           callback null,
             action: action
