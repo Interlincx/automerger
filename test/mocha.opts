@@ -1,4 +1,0 @@
---reporter spec
---compilers coffee:coffee-script
---timeout 5000
---growl
