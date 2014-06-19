@@ -36,7 +36,6 @@ class AutoMerger
     @model.removeAllListeners()
     @targetStream.destroy()
     @sourceStream.destroy()
-    @redis.quit()
 
   getStrategy: (item) ->
     if typeof item.strategy is "function"
