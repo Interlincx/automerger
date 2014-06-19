@@ -176,7 +176,7 @@ AutoMerger::worker = (sources, callback) ->
   if @rejectSource?
     if @rejectSource curSource
       callback()
-      return @emit "reject", curSource
+      return @emit 'source-reject', curSource
 
   @alterSource curSource if @alterSource?
 
@@ -185,7 +185,7 @@ AutoMerger::worker = (sources, callback) ->
 
   unless id?
     callback()
-    return @emit "reject", curSource
+    return @emit 'source-reject', curSource
 
   @getTargets id, (err, curTarget, prevTarget) ->
 
@@ -215,5 +215,5 @@ AutoMerger::worker = (sources, callback) ->
           name: self.db.name
 
     else
-      self.emit "reject", curSource
+      self.emit 'source-reject', curSource
       callback()

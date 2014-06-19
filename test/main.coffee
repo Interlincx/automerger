@@ -176,7 +176,7 @@ describe 'AutoMerger', ->
 
     am.sourceStream.write sourceDoc
 
-  it 'model should emit "reject" with rejectSource fn', (done) ->
+  it 'model should emit "source-reject" with rejectSource fn', (done) ->
     conf = getBasicConfig()
     conf.rejectSource = (doc) -> return true # always reject
     conf.db.upsert = -> assert.fail 'should not save a rejected document'
@@ -184,7 +184,7 @@ describe 'AutoMerger', ->
       assert.fail 'should not notify subscribers of rejected docs'
 
     am = new AutoMerger conf
-    am.on 'reject', (doc) ->
+    am.on 'source-reject', (doc) ->
       assert.ok doc, 'rejected document as expected'
       done()
 
@@ -196,14 +196,14 @@ describe 'AutoMerger', ->
 
     am.sourceStream.write sourceDoc
 
-  it 'model should emit "reject" with incomplete id', (done) ->
+  it 'model should emit "source-reject" with incomplete id', (done) ->
     conf = getBasicConfig()
     conf.db.upsert = -> assert.fail 'should not save a rejected document'
     conf.subscriberStreams.push es.through ->
       assert.fail 'should not notify subscribers of rejected docs'
 
     am = new AutoMerger conf
-    am.on 'reject', (doc) ->
+    am.on 'source-reject', (doc) ->
       assert.ok doc, 'rejected document as expected'
       done()
 
@@ -215,7 +215,7 @@ describe 'AutoMerger', ->
 
     am.sourceStream.write sourceDoc
 
-  it 'should emit "reject" with unchanged target', (done) ->
+  it 'should emit "source-reject" with unchanged target', (done) ->
     originalTarget = _id: 'none!name', keyPart1: 'none', keyPart2: 'name', createdAt: (new Date).toString()
 
     conf = getBasicConfig()
@@ -227,7 +227,7 @@ describe 'AutoMerger', ->
       assert.fail 'should not notify subscribers of rejected docs'
 
     am = new AutoMerger conf
-    am.on 'reject', (doc) ->
+    am.on 'source-reject', (doc) ->
       assert.ok doc, 'rejected document as expected'
       done()
 
