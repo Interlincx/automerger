@@ -154,7 +154,7 @@ class AutoMerger
   getAction: (curTarget, prevTarget) ->
     action = if prevTarget then 'update' else 'create'
 
-    if @readyProperties?.length > 1
+    if @readyProperties?.length > 0
       curReady = @checkIsReady curTarget
       prevReady = @checkIsReady prevTarget if prevTarget?
 
