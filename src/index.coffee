@@ -1,4 +1,3 @@
-_ = require 'underscore'
 deepExtend = require 'deep-extend'
 es = require 'event-stream'
 

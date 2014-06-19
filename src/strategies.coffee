@@ -1,4 +1,4 @@
-_          = require 'underscore'
+deepEqual = require 'deep-equal'
 
 assign = (opts) ->
   {sourceValue, targetKey, target, current} = opts
@@ -11,7 +11,7 @@ assign = (opts) ->
 
 
     if typeof value is 'object'
-      unless _.isEqual orig, value
+      unless deepEqual orig, value
         changed = true
 
     else
@@ -30,7 +30,7 @@ target_assign = (opts) ->
     target[targetKey] = value
 
     if typeof value is 'object'
-      unless _.isEqual orig, value
+      unless deepEqual orig, value
         changed = true
 
     else
