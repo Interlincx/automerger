@@ -69,27 +69,28 @@ an array of one or more writable streams that want to be notified of updates to 
 
 an array of fields that will be mapped to the target document from the source document. strings in the example schema above using the default strategy 'assign'. There are a number of other strategies to choose from
 
-## config.model
+### on 'source-reject'
 
-an instance of Events.EventEmitter
-
-### config.model.on 'reject'
-
-there are a few cases where a source document will be "rejected" and declared unusable:
+there are a few cases where a source document will be "rejected" and tagged unusable or irrelevant:
   1. a complete 'id' field cannot be built from the source document
   2. the source document did not change the current target document
   3. the source document failed an optional user-created 'rejectSource' function
 
-it may be useful to act on source documents that are rejected. in those cases set up an on 'reject' event listener.
+it may be useful to act on source documents that are rejected. in those cases set up an `automerger.on 'source-reject'` event listener.
 
 ## config.readyProperties
 
-may optionally pass an array of string properties that must exist on the target document in order to be deemed 'ready'. A document not being ready is different than being rejected. Rejected documents will not be saved while the unready documents will. The difference is that subscribers are not told about documents that are not ready.
+may optionally pass an array of string properties that must exist on the *target* document in order to be deemed 'ready'. A document not being ready is different than a source being rejected. Rejected source documents will not be saved while the unready documents will. The difference is that subscribers are not told about documents that are not ready.
+
+automerger instances emit `'target-not-ready'` events when a target fails the readiness requirements
 
 ## config.migrator
 
-a migration is an optional user-defined function that is applied to existing documents as they come out of the database prior to being updated when new source documents arrive
+a migration is an optional user-defined function that is applied to existing documents as they come out of the database prior to being updated when new source documents arrive.
 
+## config.alterSource
+
+optional user-defined function to manipulate source documents in the worker as they arrive from the sourceStream
 
 
 
