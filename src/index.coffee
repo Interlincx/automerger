@@ -30,11 +30,6 @@ class AutoMerger
     @sourceStream.pipe @saveStream
     @sourceStream.resume()
 
-  destroy: ->
-    @model.removeAllListeners()
-    @targetStream.destroy()
-    @sourceStream.destroy()
-
   getStrategy: (item) ->
     if typeof item.strategy is "function"
       strategy = item.strategy
