@@ -18,6 +18,36 @@ describe 'AutoMerger', ->
     am = new AutoMerger minViableConfig
     assert.ok am
 
+  it 'should push to three subscribers', (done) ->
+    subWriteCount = 0
+    checklist =
+      stream1: false
+      stream2: false
+      stream3: false
+
+    getSubStream = (name) ->
+      write = ->
+        subWriteCount += 1
+        checklist[name] = if checklist[name] then false else true
+
+        if subWriteCount is 3
+          assert.ok checklist.stream1
+          assert.ok checklist.stream2
+          assert.ok checklist.stream3
+          done()
+
+      return es.through write
+
+    conf = getBasicConfig()
+    conf.subscriberStreams = ((getSubStream "stream#{i}") for i in [1..3])
+
+    am = new AutoMerger conf
+
+    sourceDoc =
+      current: {keyPart1: 'none', keyPart2: 'name'}
+
+    am.sourceStream.write sourceDoc
+
   it 'should push to subscribers', (done) ->
 
     onJob = (job) ->
@@ -154,7 +184,6 @@ describe 'AutoMerger', ->
       assert.fail 'should not notify subscribers of rejected docs'
 
     conf.model.on 'reject', (doc) ->
-      console.log "doc: ", doc
       assert.ok doc, 'rejected document as expected'
       done()
 
