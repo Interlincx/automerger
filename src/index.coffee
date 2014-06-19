@@ -205,6 +205,7 @@ class AutoMerger
           return callback err if err
 
           if action is 'not_ready'
+            self.model.emit 'not_ready', curTarget
             # save but do not tell subscribers
             return callback()
 
