@@ -21,7 +21,6 @@ class AutoMerger
     @rejectSource = opts.rejectSource
     @alterSource = opts.alterSource
     @subscriberStreams = opts.subscriberStreams or []
-    @parallel = opts.parallel
     @version = opts.version
 
     @saveStream = es.map @worker.bind this
