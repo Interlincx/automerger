@@ -6,7 +6,6 @@ module.exports = ->
     name: "test-model"
     find: (id, cb) -> cb null, null
     upsert: (id, doc, cb) -> cb null
-  model: new EventEmitter
   sourceStream: es.through (data) -> @queue data
   sourceToIdPieces: (doc) -> [doc.keyPart1, doc.keyPart2]
   subscriberStreams: []

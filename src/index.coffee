@@ -9,6 +9,9 @@ schema = require './schema'
 strategies = require './strategies'
 
 module.exports = AutoMerger = (opts) ->
+  unless this instanceof AutoMerger
+    return new AutoMerger opts
+
   EventEmitter.call this
 
   optKeys = [

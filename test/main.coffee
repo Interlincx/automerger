@@ -4,19 +4,18 @@ es = require "event-stream"
 
 AutoMerger = require '../src/index'
 getBasicConfig = require './fixtures/basic-config'
+getMinConfig = require './fixtures/min-config'
 
 describe 'AutoMerger', ->
   it 'should instantiate', ->
-    minViableConfig =
-      db:
-        name: ''
-      model: new EventEmitter
-      sourceStream:
-        pipe: ->
-        resume: ->
-
-    am = new AutoMerger minViableConfig
+    am = new AutoMerger getMinConfig()
     assert.ok am
+    assert.ok am instanceof AutoMerger
+
+  it 'should instantiate without "new"', ->
+    am = AutoMerger getMinConfig()
+    assert.ok am
+    assert.ok am instanceof AutoMerger
 
   it 'should push to three subscribers', (done) ->
     subWriteCount = 0
