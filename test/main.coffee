@@ -1,93 +1,269 @@
 assert = require('chai').assert
 {EventEmitter} = require 'events'
+es = require "event-stream"
 
 AutoMerger = require '../src/index'
 getBasicConfig = require './fixtures/basic-config'
-getUpdateConfig = require './fixtures/config-with-target-doc'
-redis = require 'fakeredis'
+getMinConfig = require './fixtures/min-config'
 
 describe 'AutoMerger', ->
   it 'should instantiate', ->
-    minViableConfig =
-      db:
-        name: ''
-      model: new EventEmitter
-      sourceStream:
-        pipe: ->
-        resume: ->
-
-    am = new AutoMerger minViableConfig
+    am = new AutoMerger getMinConfig()
     assert.ok am
+    assert.ok am instanceof AutoMerger
 
-  it 'should push to subscribers', (done) ->
+  it 'should instantiate without "new"', ->
+    am = AutoMerger getMinConfig()
+    assert.ok am
+    assert.ok am instanceof AutoMerger
+
+  it 'should push to three subscribers', (done) ->
+    subWriteCount = 0
+    checklist =
+      stream1: false
+      stream2: false
+      stream3: false
+
+    getSubStream = (name) ->
+      write = ->
+        subWriteCount += 1
+        checklist[name] = if checklist[name] then false else true
+
+        if subWriteCount is 3
+          assert.ok checklist.stream1
+          assert.ok checklist.stream2
+          assert.ok checklist.stream3
+          done()
+
+      return es.through write
 
     conf = getBasicConfig()
-    conf.redis = rc = redis.createClient()
+    conf.subscriberStreams = ((getSubStream "stream#{i}") for i in [1..3])
+
     am = new AutoMerger conf
 
-
     sourceDoc =
-      current: {type: 'none', field: 'name'}
+      current: {keyPart1: 'none', keyPart2: 'name'}
 
     am.sourceStream.write sourceDoc
 
-    rc.blpop 'dest1', 0, (err, res) ->
-      assert.isNull err
+  it 'should push to subscribers', (done) ->
 
-      queueName = res[0]
-      assert.equal queueName, 'dest1'
+    onJob = (job) ->
 
-      subJob = JSON.parse res[1]
-      assert.equal subJob.action, 'create'
-      assert.equal subJob.name, 'test-model'
+      assert.equal job.action, 'create'
+      assert.equal job.name, 'test-model'
 
-      doc = subJob.current
+      doc = job.current
       assert.equal doc._id, 'none!name'
       assert.ok doc.createdAt
-      assert.equal doc.type, 'none'
-      assert.equal doc.field, 'name'
+      assert.equal doc.keyPart1, 'none'
+      assert.equal doc.keyPart2, 'name'
       assert.equal doc.version, 'test-version'
 
       done()
 
-  it 'should stop emitting after destroy', (done) ->
     conf = getBasicConfig()
-    conf.redis = redis.createClient 'destroy-test'
+    conf.subscriberStreams.push es.through onJob
+
     am = new AutoMerger conf
 
-    am.destroy()
-
     sourceDoc =
-      current: {type: 'none', field: 'name'}
+      current: {keyPart1: 'none', keyPart2: 'name'}
 
     am.sourceStream.write sourceDoc
 
-    rc = redis.createClient 'destroy-test'
+  it 'should migrate', (done) ->
+    conf = getBasicConfig()
+    existingDoc = {field1: 'ok', another: true}
 
-    rc.blpop 'dest1', 1, (err, res) ->
-      assert.isNull err
-      assert.isNull res
+    # an existing document is returned by `find`
+    conf.db.find = (id, cb) -> cb null, existingDoc
 
-      assert.isFalse am.sourceStream.readable
-      assert.isFalse am.sourceStream.writable
-
-      assert.isFalse am.targetStream.readable
-      assert.isFalse am.targetStream.writable
+    conf.subscriberStreams.push es.through (job) ->
+      # subscriptionStream receives the migrated document
+      assert.equal job.current.field2, 'sure'
+      assert.equal job.current.field3, true
 
       done()
-
-  it 'should migrate', (done) ->
-    conf = getUpdateConfig()
-    conf.redis = redis.createClient 'migrate-test'
 
     conf.migrator = (doc) ->
-      assert.deepEqual doc, { field1: 'ok', another: true }
-      done()
+      # check initial state
+      assert.deepEqual doc, existingDoc
+
+      # do migration
+      delete doc.field1
+      delete doc.another
+      doc.field2 = 'sure'
+      doc.field3 = true
+
       return doc
 
     am = new AutoMerger conf
 
     sourceDoc =
-      current: {type: 'none', field: 'name'}
+      current: {keyPart1: 'none', keyPart2: 'name'}
+
+    am.sourceStream.write sourceDoc
+
+  it 'should save new', (done) ->
+
+    onUpsert = (id, doc, cb) ->
+      assert.equal id, 'none!name'
+      assert.equal doc._id, 'none!name'
+      assert.ok doc.createdAt
+      assert.equal doc.keyPart1, 'none'
+      assert.equal doc.keyPart2, 'name'
+      assert.equal doc.version, 'test-version'
+
+      cb null
+
+    onJob = (job) ->
+      assert.equal job.action, 'create'
+      assert.equal job.name, 'test-model'
+      done()
+
+    conf = getBasicConfig()
+    conf.db.upsert = onUpsert
+    conf.subscriberStreams.push es.through onJob
+
+    am = new AutoMerger conf
+
+    sourceDoc =
+      current: {keyPart1: 'none', keyPart2: 'name'}
+
+    am.sourceStream.write sourceDoc
+
+  it 'should update existing', (done) ->
+
+    originalTarget = _id: 'none!name', keyPart1: 'none', keyPart2: 'name', createdAt: (new Date).toString()
+
+    onUpsert = (id, doc, cb) ->
+      assert.equal id, 'none!name'
+      assert.equal doc._id, 'none!name'
+      assert.equal doc.nonKeyField, true # new field was set
+      assert.ok doc.createdAt
+      assert.ok doc.updatedAt
+      assert.equal doc.keyPart1, 'none'
+      assert.equal doc.keyPart2, 'name'
+      assert.equal doc.version, 'test-version'
+
+      cb null
+
+    onJob = (job) ->
+      assert.equal job.action, 'update'
+      assert.equal job.name, 'test-model'
+
+      assert.notOk job.previous.nonKeyField, 'nonKeyField field was NOT defined on original'
+      assert.notOk job.previous.updatedAt
+      assert.ok job.current.nonKeyField, 'nonKeyField field IS defined on current'
+      assert.ok job.current.updatedAt
+      done()
+
+    conf = getBasicConfig()
+    conf.db.upsert = onUpsert
+    conf.db.find = (id, cb) -> cb null, originalTarget
+    conf.subscriberStreams.push es.through onJob
+
+    am = new AutoMerger conf
+
+    sourceDoc =
+      current:
+        keyPart1: 'none'
+        keyPart2: 'name'
+        nonKeyField: true
+
+    am.sourceStream.write sourceDoc
+
+  it 'model should emit "source-reject" with rejectSource fn', (done) ->
+    conf = getBasicConfig()
+    conf.rejectSource = (doc) -> return true # always reject
+    conf.db.upsert = -> assert.fail 'should not save a rejected document'
+    conf.subscriberStreams.push es.through ->
+      assert.fail 'should not notify subscribers of rejected docs'
+
+    am = new AutoMerger conf
+    am.on 'source-reject', (doc) ->
+      assert.ok doc, 'rejected document as expected'
+      done()
+
+    sourceDoc =
+      current:
+        keyPart1: 'none'
+        keyPart2: 'name'
+        nonKeyField: true
+
+    am.sourceStream.write sourceDoc
+
+  it 'model should emit "source-reject" with incomplete id', (done) ->
+    conf = getBasicConfig()
+    conf.db.upsert = -> assert.fail 'should not save a rejected document'
+    conf.subscriberStreams.push es.through ->
+      assert.fail 'should not notify subscribers of rejected docs'
+
+    am = new AutoMerger conf
+    am.on 'source-reject', (doc) ->
+      assert.ok doc, 'rejected document as expected'
+      done()
+
+    sourceDoc =
+      current:
+        keyPart1: 'none'
+        # keyPart2: 'name' # source is missing keyPart2, an idPiece
+        nonKeyField: true
+
+    am.sourceStream.write sourceDoc
+
+  it 'should emit "source-reject" with unchanged target', (done) ->
+    originalTarget = _id: 'none!name', keyPart1: 'none', keyPart2: 'name', createdAt: (new Date).toString()
+
+    conf = getBasicConfig()
+
+    conf.db.find = (id, cb) -> cb null, originalTarget
+    conf.db.upsert = -> assert.fail 'should not save a rejected document'
+
+    conf.subscriberStreams.push es.through ->
+      assert.fail 'should not notify subscribers of rejected docs'
+
+    am = new AutoMerger conf
+    am.on 'source-reject', (doc) ->
+      assert.ok doc, 'rejected document as expected'
+      done()
+
+    sourceDoc =
+      current:
+        keyPart1: 'none'
+        keyPart2: 'name'
+
+    am.sourceStream.write sourceDoc
+
+  it '"target-not-ready" should save target and emit event', (done) ->
+    conf = getBasicConfig()
+    conf.readyProperties = ['readyField']
+
+    savedTarget = false
+
+    conf.db.upsert = (id, doc, cb) ->
+      savedTarget = true
+      assert.ok id
+      assert.ok doc
+      cb null
+
+    conf.subscriberStreams.push es.through ->
+      assert.fail 'should not notify subscribers of unready docs'
+
+    am = new AutoMerger conf
+
+    am.on 'target-not-ready', (doc) ->
+      assert.ok doc, 'document not ready as expected'
+      assert.ok savedTarget
+      done()
+
+    sourceDoc =
+      current:
+        keyPart1: 'none'
+        keyPart2: 'name'
+        nonKeyField: true
+        # readyField: true #readyProperty not present
 
     am.sourceStream.write sourceDoc
