@@ -1,12 +1,18 @@
+{EventEmitter}  = require 'events'
+util            = require 'util'
+
 deepExtend = require 'deep-extend'
 es = require 'event-stream'
+
 
 schema = require './schema'
 strategies = require './strategies'
 
 module.exports = AutoMerger = (opts) ->
+  EventEmitter.call this
+
   optKeys = [
-    "alterSource", "db", "migrator", "model"
+    "alterSource", "db", "migrator"
     "readyProperties", "rejectSource", "schema"
     "sourceStream", "sourceToIdPieces"
     "subscriberStreams", "version"
@@ -26,6 +32,8 @@ module.exports = AutoMerger = (opts) ->
   @sourceStream.resume()
 
   return this
+
+util.inherits AutoMerger, EventEmitter
 
 AutoMerger::getStrategy = (item) ->
   if typeof item.strategy is "function"
@@ -168,7 +176,7 @@ AutoMerger::worker = (sources, callback) ->
   if @rejectSource?
     if @rejectSource curSource
       callback()
-      return @model.emit "reject", curSource
+      return @emit "reject", curSource
 
   @alterSource curSource if @alterSource?
 
@@ -177,7 +185,7 @@ AutoMerger::worker = (sources, callback) ->
 
   unless id?
     callback()
-    return @model.emit "reject", curSource
+    return @emit "reject", curSource
 
   @getTargets id, (err, curTarget, prevTarget) ->
 
@@ -196,7 +204,7 @@ AutoMerger::worker = (sources, callback) ->
         return callback err if err
 
         if action is 'not_ready'
-          self.model.emit 'not_ready', curTarget
+          self.emit 'not_ready', curTarget
           # save but do not tell subscribers
           return callback()
 
@@ -207,5 +215,5 @@ AutoMerger::worker = (sources, callback) ->
           name: self.db.name
 
     else
-      self.model.emit "reject", curSource
+      self.emit "reject", curSource
       callback()

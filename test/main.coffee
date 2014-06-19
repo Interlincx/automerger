@@ -183,11 +183,10 @@ describe 'AutoMerger', ->
     conf.subscriberStreams.push es.through ->
       assert.fail 'should not notify subscribers of rejected docs'
 
-    conf.model.on 'reject', (doc) ->
+    am = new AutoMerger conf
+    am.on 'reject', (doc) ->
       assert.ok doc, 'rejected document as expected'
       done()
-
-    am = new AutoMerger conf
 
     sourceDoc =
       current:
@@ -203,11 +202,10 @@ describe 'AutoMerger', ->
     conf.subscriberStreams.push es.through ->
       assert.fail 'should not notify subscribers of rejected docs'
 
-    conf.model.on 'reject', (doc) ->
+    am = new AutoMerger conf
+    am.on 'reject', (doc) ->
       assert.ok doc, 'rejected document as expected'
       done()
-
-    am = new AutoMerger conf
 
     sourceDoc =
       current:
@@ -217,7 +215,7 @@ describe 'AutoMerger', ->
 
     am.sourceStream.write sourceDoc
 
-  it 'model should emit "reject" with unchanged target', (done) ->
+  it 'should emit "reject" with unchanged target', (done) ->
     originalTarget = _id: 'none!name', keyPart1: 'none', keyPart2: 'name', createdAt: (new Date).toString()
 
     conf = getBasicConfig()
@@ -228,11 +226,10 @@ describe 'AutoMerger', ->
     conf.subscriberStreams.push es.through ->
       assert.fail 'should not notify subscribers of rejected docs'
 
-    conf.model.on 'reject', (doc) ->
+    am = new AutoMerger conf
+    am.on 'reject', (doc) ->
       assert.ok doc, 'rejected document as expected'
       done()
-
-    am = new AutoMerger conf
 
     sourceDoc =
       current:
@@ -253,11 +250,11 @@ describe 'AutoMerger', ->
     conf.subscriberStreams.push es.through ->
       assert.fail 'should not notify subscribers of unready docs'
 
-    conf.model.on 'not_ready', (doc) ->
+    am = new AutoMerger conf
+
+    am.on 'not_ready', (doc) ->
       assert.ok doc, 'document not ready as expected'
       done()
-
-    am = new AutoMerger conf
 
     sourceDoc =
       current:
