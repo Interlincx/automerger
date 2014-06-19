@@ -211,3 +211,30 @@ describe 'AutoMerger', ->
         keyPart2: 'name'
 
     am.sourceStream.write sourceDoc
+
+  it 'should be not_ready', (done) ->
+    conf = getBasicConfig()
+    conf.readyProperties = ['readyField']
+
+    conf.db.upsert = (id, doc, cb) ->
+      assert.ok id
+      assert.ok doc
+      cb null
+
+    conf.subscriberStreams.push es.through ->
+      assert.fail 'should not notify subscribers of unready docs'
+
+    conf.model.on 'not_ready', (doc) ->
+      assert.ok doc, 'document not ready as expected'
+      done()
+
+    am = new AutoMerger conf
+
+    sourceDoc =
+      current:
+        keyPart1: 'none'
+        keyPart2: 'name'
+        nonKeyField: true
+        # readyField: true #readyProperty not present
+
+    am.sourceStream.write sourceDoc
