@@ -1,4 +1,27 @@
 
+1.0.0 / 2014-06-19
+==================
+
+ * ctor: allow ‘new’ keyword or not
+ * changed event ‘not_ready’ to ‘target-not-ready’ for clarity
+ * changed ‘reject’ event to ‘source-reject’
+ * removed concept of a ‘model’ event-emitter. AutoMerger now extends EE
+ * converted CS class to prototype
+ * removed unused ‘destroy’ function
+ * replaced underscore dep with deep-equal
+ * readyProperties: simplified default/existence
+ * removed ‘parallel’ property
+ * removed redis dependency from api
+ * removed fakeredis dev dep
+ * fix: not_ready property length check
+ * fix: reject on unchanged target
+ * fix: set updatedAt after cloning prevTarget to curTarget
+ * test: many new tests
+ * readme: overhaul for new api
+ * moved readyProperties from model to automerger
+ * deleted bin/ dir
+ * now using subscriberStreams[] in place of redis connection
+
 0.6.0 / 2014-04-14
 ==================
 
@@ -27,22 +50,22 @@
 
 0.3.0 / 2013-12-13
 ==================
-  
+
   - use '!' to delimit key fragments instead of '_'
 
 0.2.3 / 2013-10-08
 ==================
-  
+
   - changed updated and created ts var names
 
 0.2.2 / 2013-10-08
 ==================
-  
+
   - still need underscore dep for strategies. added
 
 0.2.1 / 2013-10-01
 ==================
-  
+
   - fixed a test that wasn't running
 
 0.2.0 / 2013-10-01
