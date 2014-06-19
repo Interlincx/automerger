@@ -1,5 +1,3 @@
-assert = require('chai').assert
-{EventEmitter} = require 'events'
 es = require "event-stream"
 
 AutoMerger = require '../src/index'

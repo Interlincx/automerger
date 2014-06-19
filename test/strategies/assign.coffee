@@ -1,4 +1,4 @@
-assert = require('chai').assert
+test = require 'tape'
 Strategies = require '../../src/strategies'
 
 describe 'Assign', ->

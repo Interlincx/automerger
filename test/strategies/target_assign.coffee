@@ -1,4 +1,3 @@
-assert = require('chai').assert
 Strategies = require '../../src/strategies'
 
 describe 'Target Assign', ->
