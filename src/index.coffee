@@ -16,7 +16,7 @@ class AutoMerger
 
     @sourceToIdPieces = opts.sourceToIdPieces
     @schema = opts.schema
-    @readyProperties = opts.readyProperties or []
+    @readyProperties = opts.readyProperties
 
     @rejectSource = opts.rejectSource
     @alterSource = opts.alterSource
@@ -143,6 +143,8 @@ class AutoMerger
     return key
 
   checkIsReady: (target) ->
+    return true unless @readyProperties?
+
     ready = true
     for prop in @readyProperties
       ready = false unless target[prop]?
@@ -152,7 +154,7 @@ class AutoMerger
   getAction: (curTarget, prevTarget) ->
     action = if prevTarget then 'update' else 'create'
 
-    if @readyProperties?.length > 0
+    if @readyProperties?
       curReady = @checkIsReady curTarget
       prevReady = @checkIsReady prevTarget if prevTarget?
 
