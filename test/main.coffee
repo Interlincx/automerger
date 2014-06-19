@@ -238,11 +238,14 @@ describe 'AutoMerger', ->
 
     am.sourceStream.write sourceDoc
 
-  it 'should be not_ready', (done) ->
+  it '"target-not-ready" should save target and emit event', (done) ->
     conf = getBasicConfig()
     conf.readyProperties = ['readyField']
 
+    savedTarget = false
+
     conf.db.upsert = (id, doc, cb) ->
+      savedTarget = true
       assert.ok id
       assert.ok doc
       cb null
@@ -252,8 +255,9 @@ describe 'AutoMerger', ->
 
     am = new AutoMerger conf
 
-    am.on 'not_ready', (doc) ->
+    am.on 'target-not-ready', (doc) ->
       assert.ok doc, 'document not ready as expected'
+      assert.ok savedTarget
       done()
 
     sourceDoc =

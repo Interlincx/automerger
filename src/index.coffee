@@ -163,7 +163,7 @@ AutoMerger::getAction = (curTarget, prevTarget) ->
       else
         action = 'create'
     else
-      action = 'not_ready'
+      action = 'target-not-ready'
 
   return action
 
@@ -203,8 +203,8 @@ AutoMerger::worker = (sources, callback) ->
       self.save curTarget, (err) ->
         return callback err if err
 
-        if action is 'not_ready'
-          self.emit 'not_ready', curTarget
+        if action is 'target-not-ready'
+          self.emit 'target-not-ready', curTarget
           # save but do not tell subscribers
           return callback()
 
