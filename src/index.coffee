@@ -5,21 +5,17 @@ schema = require './schema'
 strategies = require './strategies'
 
 module.exports = AutoMerger = (opts) ->
+  optKeys = [
+    "alterSource", "db", "migrator", "model"
+    "readyProperties", "rejectSource", "schema"
+    "sourceStream", "sourceToIdPieces"
+    "subscriberStreams", "version"
+  ]
 
-  @db = opts.db
-  @model = opts.model
-  @sourceStream = opts.sourceStream
+  @subscriberStreams ?= []
 
-  @migrator = opts.migrator
-
-  @sourceToIdPieces = opts.sourceToIdPieces
-  @schema = opts.schema
-  @readyProperties = opts.readyProperties
-
-  @rejectSource = opts.rejectSource
-  @alterSource = opts.alterSource
-  @subscriberStreams = opts.subscriberStreams or []
-  @version = opts.version
+  for key in optKeys
+    this[key] = opts[key] if opts[key]
 
   @saveStream = es.map @worker.bind this
 
