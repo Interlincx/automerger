@@ -12,10 +12,10 @@ module.exports = AutoMerger = (opts) ->
   EventEmitter.call this
 
   optKeys = [
-    "alterSource", "db", "migrator"
-    "readyProperties", "rejectSource", "schema"
-    "sourceStream", "sourceToIdPieces"
-    "subscriberStreams", "version"
+    'alterSource', 'db', 'migrator'
+    'readyProperties', 'rejectSource', 'schema'
+    'sourceStream', 'sourceToIdPieces'
+    'subscriberStreams', 'version'
   ]
 
   @subscriberStreams ?= []
@@ -36,7 +36,7 @@ module.exports = AutoMerger = (opts) ->
 util.inherits AutoMerger, EventEmitter
 
 AutoMerger::getStrategy = (item) ->
-  if typeof item.strategy is "function"
+  if typeof item.strategy is 'function'
     strategy = item.strategy
   else
     strategy = strategies[item.strategy]
@@ -44,7 +44,7 @@ AutoMerger::getStrategy = (item) ->
   return strategy
 
 AutoMerger::getTargetKey = (item, current) ->
-  if typeof item.targetKey is "function"
+  if typeof item.targetKey is 'function'
     targetKey = item.targetKey current
   else
     targetKey = item.targetKey
@@ -52,7 +52,7 @@ AutoMerger::getTargetKey = (item, current) ->
   return targetKey
 
 AutoMerger::runStrategyWithTargetKey = (strategyOpts, targetKey, target, strategy) ->
-  namePieces = targetKey.split "."
+  namePieces = targetKey.split '.'
   strategyOpts.targetKey = targetKey
 
   if namePieces.length is 1
@@ -70,9 +70,9 @@ AutoMerger::runStrategyWithTargetKey = (strategyOpts, targetKey, target, strateg
     strategy strategyOpts
 
 AutoMerger::mergeItem = (item, current, previous, target) ->
-  if typeof item is "string"
+  if typeof item is 'string'
     item = schema.stringToObject item
-  else if typeof item is "function"
+  else if typeof item is 'function'
     item = schema.functionToObject item
 
   strategyOpts =
@@ -123,10 +123,10 @@ AutoMerger::save = (curTarget, callback) ->
 
   curTarget.version = @version
 
-  if curTarget.createdAt? and typeof curTarget.createdAt is "string"
+  if curTarget.createdAt? and typeof curTarget.createdAt is 'string'
     curTarget.createdAt = new Date(curTarget.createdAt)
 
-  if curTarget.updatedAt? and typeof curTarget.updatedAt is "string"
+  if curTarget.updatedAt? and typeof curTarget.updatedAt is 'string'
     curTarget.updatedAt = new Date(curTarget.updatedAt)
 
   @db.upsert curTarget._id, curTarget, callback
@@ -138,7 +138,7 @@ AutoMerger::piecesToId = (pieces) ->
 
   return null unless valid
 
-  key = pieces.join "!"
+  key = pieces.join '!'
   return key
 
 AutoMerger::checkIsReady = (target) ->
@@ -159,11 +159,11 @@ AutoMerger::getAction = (curTarget, prevTarget) ->
 
     if curReady
       if prevReady
-        action = "update"
+        action = 'update'
       else
-        action = "create"
+        action = 'create'
     else
-      action = "not_ready"
+      action = 'not_ready'
 
   return action
 
