@@ -220,3 +220,16 @@ AutoMerger::worker = (sources, callback) ->
     else
       self.emit 'source-reject', curSource
       callback()
+
+AutoMerger::destroy = ->
+  @sourceStream.readable = false
+  @sourceStream.destroy()
+
+  @saveStream.readable = false
+  @saveStream.writable = false
+  @saveStream.destroy()
+
+  @subscriberStreams.forEach (ss) ->
+    ss.writable = false
+    ss.destroy()
+
