@@ -18,7 +18,7 @@ module.exports = AutoMerger = (opts) ->
     'alterSource', 'db', 'migrator'
     'readyProperties', 'rejectSource', 'schema'
     'sourceStream', 'sourceToIdPieces'
-    'subscriberStreams', 'version'
+    'subscriberStreams', 'version', 'destroyHook'
   ]
 
   @subscriberStreams ?= []
@@ -221,15 +221,27 @@ AutoMerger::worker = (sources, callback) ->
       self.emit 'source-reject', curSource
       callback()
 
-AutoMerger::destroy = ->
-  @sourceStream.readable = false
-  @sourceStream.destroy()
+AutoMerger::destroy = (cb=->) ->
+  self = this
 
-  @saveStream.readable = false
-  @saveStream.writable = false
-  @saveStream.destroy()
+  onSubsClosed = ->
+    self.sourceStream.close ->
 
-  @subscriberStreams.forEach (ss) ->
-    ss.writable = false
-    ss.destroy()
+      #es.map stream
+      self.saveStream.on 'close', ->
+        if self.destroyHook?
+          self.destroyHook self, cb
+        else
+          cb()
+
+      self.saveStream.destroy()
+
+  cbCt = 0
+  @subscriberStreams.forEach (stream) ->
+    stream.close ->
+      cbCt += 1
+      onSubsClosed() if cbCt is self.subscriberStreams.length
+
+
+
 
