@@ -1,4 +1,9 @@
 
+1.2.0 / 2014-06-20
+==================
+
+ * destroy: close out all streams, hand control back to a hook function if defined
+
 1.1.0 / 2014-06-20
 ==================
 
