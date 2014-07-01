@@ -237,10 +237,13 @@ AutoMerger::destroy = (cb=->) ->
       self.saveStream.destroy()
 
   cbCt = 0
-  @subscriberStreams.forEach (stream) ->
-    stream.close ->
-      cbCt += 1
-      onSubsClosed() if cbCt is self.subscriberStreams.length
+  if @subscriberStreams.length is 0
+    onSubsClosed()
+  else
+    @subscriberStreams.forEach (stream) ->
+      stream.close ->
+        cbCt += 1
+        onSubsClosed() if cbCt is self.subscriberStreams.length
 
 
 
