@@ -1,4 +1,9 @@
 
+n.n.n / 2014-07-16 
+==================
+
+ * replaced ‘destroy’ with ‘close’ for instance teardown
+
 1.2.1 / 2014-06-30
 ==================
 
