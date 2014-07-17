@@ -192,9 +192,7 @@ describe 'AutoMerger', ->
 
   it 'model should emit "source-reject" with rejectSource fn', (done) ->
     conf = getBasicConfig()
-    conf.rejectSource = (doc) ->
-      console.log "doc: ", doc
-      return true # always reject
+    conf.rejectSource = (doc) -> return true # always reject
     conf.db.upsert = -> assert.fail 'should not save a rejected document'
     conf.subscriberStreams.push es.through ->
       assert.fail 'should not notify subscribers of rejected docs'

@@ -32,7 +32,6 @@ module.exports = AutoMerger = (opts) ->
     @saveStream.pipe subStream
 
   @sourceStream.pipe @saveStream
-  @sourceStream.resume()
 
   return this
 
