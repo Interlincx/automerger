@@ -221,30 +221,4 @@ AutoMerger::worker = (sources, callback) ->
       self.emit 'source-reject', curSource
       callback()
 
-AutoMerger::destroy = (cb=->) ->
-  self = this
-
-  onSubsClosed = ->
-    self.sourceStream.close ->
-
-      #es.map stream
-      self.saveStream.on 'close', ->
-        if self.destroyHook?
-          self.destroyHook self, cb
-        else
-          cb()
-
-      self.saveStream.destroy()
-
-  cbCt = 0
-  if @subscriberStreams.length is 0
-    onSubsClosed()
-  else
-    @subscriberStreams.forEach (stream) ->
-      stream.close ->
-        cbCt += 1
-        onSubsClosed() if cbCt is self.subscriberStreams.length
-
-
-
-
+AutoMerger::close = -> @sourceStream.emit 'end'
