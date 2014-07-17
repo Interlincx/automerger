@@ -1,5 +1,13 @@
 
-n.n.n / 2014-07-16 
+1.4.0/ 2014-07-17
+==================
+
+ * sourceStream now is expected to be a readable and writable stream (duplex)
+ * cbId gets written back to sourceStream on success
+ * index: don’t call resume() on sourceStream in constructor anymore
+ * tests: updated for sourceStream becoming a duplexStream
+
+1.3.0 / 2014-07-16
 ==================
 
  * replaced ‘destroy’ with ‘close’ for instance teardown
