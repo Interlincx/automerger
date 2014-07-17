@@ -79,6 +79,23 @@ describe 'AutoMerger', ->
 
     am = new AutoMerger conf
 
+  it 'should write cbId to sourceStream on db save', (done) ->
+
+    conf = getBasicConfig()
+
+    sourceDoc =
+      cbId: 'someId-from-client'
+      current: {keyPart1: 'none', keyPart2: 'name'}
+
+    conf.sourceStream = es.duplex [
+      es.through (cbId) ->
+        assert.equal cbId, sourceDoc.cbId, 'cbId received by sourceStream should match expected'
+        done()
+      es.readArray [sourceDoc]
+    ]...
+
+    am = new AutoMerger conf
+
   it 'should migrate', (done) ->
     conf = getBasicConfig()
     existingDoc = {field1: 'ok', another: true}

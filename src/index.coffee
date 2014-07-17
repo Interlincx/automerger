@@ -175,6 +175,11 @@ AutoMerger::worker = (sources, callback) ->
   curSource = current
   prevSource = previous
 
+  origCallback = callback
+  callback = (args...) ->
+    self.sourceStream.write sources.cbId
+    origCallback.apply null, args
+
   if @rejectSource?
     if @rejectSource curSource
       callback()
