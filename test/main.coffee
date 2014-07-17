@@ -40,14 +40,17 @@ describe 'AutoMerger', ->
     conf = getBasicConfig()
     conf.subscriberStreams = ((getSubStream "stream#{i}") for i in [1..3])
 
-    am = new AutoMerger conf
-
     sourceDoc =
       current: {keyPart1: 'none', keyPart2: 'name'}
 
-    am.sourceStream.write sourceDoc
+    conf.sourceStream = es.duplex [
+      es.through()
+      es.readArray [sourceDoc]
+    ]...
 
-  it 'should push to subscribers', (done) ->
+    am = new AutoMerger conf
+
+  it 'should push to a subscriber', (done) ->
 
     onJob = (job) ->
 
@@ -66,12 +69,15 @@ describe 'AutoMerger', ->
     conf = getBasicConfig()
     conf.subscriberStreams.push es.through onJob
 
-    am = new AutoMerger conf
-
     sourceDoc =
       current: {keyPart1: 'none', keyPart2: 'name'}
 
-    am.sourceStream.write sourceDoc
+    conf.sourceStream = es.duplex [
+      es.through()
+      es.readArray [sourceDoc]
+    ]...
+
+    am = new AutoMerger conf
 
   it 'should migrate', (done) ->
     conf = getBasicConfig()
@@ -99,12 +105,15 @@ describe 'AutoMerger', ->
 
       return doc
 
-    am = new AutoMerger conf
-
     sourceDoc =
       current: {keyPart1: 'none', keyPart2: 'name'}
 
-    am.sourceStream.write sourceDoc
+    conf.sourceStream = es.duplex [
+      es.through()
+      es.readArray [sourceDoc]
+    ]...
+
+    am = new AutoMerger conf
 
   it 'should save new', (done) ->
 
@@ -127,12 +136,15 @@ describe 'AutoMerger', ->
     conf.db.upsert = onUpsert
     conf.subscriberStreams.push es.through onJob
 
-    am = new AutoMerger conf
-
     sourceDoc =
       current: {keyPart1: 'none', keyPart2: 'name'}
 
-    am.sourceStream.write sourceDoc
+    conf.sourceStream = es.duplex [
+      es.through()
+      es.readArray [sourceDoc]
+    ]...
+
+    am = new AutoMerger conf
 
   it 'should update existing', (done) ->
 
@@ -165,35 +177,44 @@ describe 'AutoMerger', ->
     conf.db.find = (id, cb) -> cb null, originalTarget
     conf.subscriberStreams.push es.through onJob
 
-    am = new AutoMerger conf
-
     sourceDoc =
       current:
         keyPart1: 'none'
         keyPart2: 'name'
         nonKeyField: true
 
-    am.sourceStream.write sourceDoc
+    conf.sourceStream = es.duplex [
+      es.through()
+      es.readArray [sourceDoc]
+    ]...
+
+    am = new AutoMerger conf
 
   it 'model should emit "source-reject" with rejectSource fn', (done) ->
     conf = getBasicConfig()
-    conf.rejectSource = (doc) -> return true # always reject
+    conf.rejectSource = (doc) ->
+      console.log "doc: ", doc
+      return true # always reject
     conf.db.upsert = -> assert.fail 'should not save a rejected document'
     conf.subscriberStreams.push es.through ->
       assert.fail 'should not notify subscribers of rejected docs'
 
-    am = new AutoMerger conf
-    am.on 'source-reject', (doc) ->
-      assert.ok doc, 'rejected document as expected'
-      done()
-
     sourceDoc =
       current:
         keyPart1: 'none'
         keyPart2: 'name'
         nonKeyField: true
 
-    am.sourceStream.write sourceDoc
+    conf.sourceStream = es.duplex [
+      es.through()
+      es.readArray [sourceDoc]
+    ]...
+
+    am = new AutoMerger conf
+
+    am.on 'source-reject', (doc) ->
+      assert.ok doc, 'rejected document as expected'
+      done()
 
   it 'model should emit "source-reject" with incomplete id', (done) ->
     conf = getBasicConfig()
@@ -201,18 +222,21 @@ describe 'AutoMerger', ->
     conf.subscriberStreams.push es.through ->
       assert.fail 'should not notify subscribers of rejected docs'
 
-    am = new AutoMerger conf
-    am.on 'source-reject', (doc) ->
-      assert.ok doc, 'rejected document as expected'
-      done()
-
     sourceDoc =
       current:
         keyPart1: 'none'
         # keyPart2: 'name' # source is missing keyPart2, an idPiece
         nonKeyField: true
 
-    am.sourceStream.write sourceDoc
+    conf.sourceStream = es.duplex [
+      es.through()
+      es.readArray [sourceDoc]
+    ]...
+
+    am = new AutoMerger conf
+    am.on 'source-reject', (doc) ->
+      assert.ok doc, 'rejected document as expected'
+      done()
 
   it 'should emit "source-reject" with unchanged target', (done) ->
     originalTarget = _id: 'none!name', keyPart1: 'none', keyPart2: 'name', createdAt: (new Date).toString()
@@ -225,17 +249,20 @@ describe 'AutoMerger', ->
     conf.subscriberStreams.push es.through ->
       assert.fail 'should not notify subscribers of rejected docs'
 
-    am = new AutoMerger conf
-    am.on 'source-reject', (doc) ->
-      assert.ok doc, 'rejected document as expected'
-      done()
-
     sourceDoc =
       current:
         keyPart1: 'none'
         keyPart2: 'name'
 
-    am.sourceStream.write sourceDoc
+    conf.sourceStream = es.duplex [
+      es.through()
+      es.readArray [sourceDoc]
+    ]...
+
+    am = new AutoMerger conf
+    am.on 'source-reject', (doc) ->
+      assert.ok doc, 'rejected document as expected'
+      done()
 
   it '"target-not-ready" should save target and emit event', (done) ->
     conf = getBasicConfig()
@@ -252,13 +279,6 @@ describe 'AutoMerger', ->
     conf.subscriberStreams.push es.through ->
       assert.fail 'should not notify subscribers of unready docs'
 
-    am = new AutoMerger conf
-
-    am.on 'target-not-ready', (doc) ->
-      assert.ok doc, 'document not ready as expected'
-      assert.ok savedTarget
-      done()
-
     sourceDoc =
       current:
         keyPart1: 'none'
@@ -266,4 +286,15 @@ describe 'AutoMerger', ->
         nonKeyField: true
         # readyField: true #readyProperty not present
 
-    am.sourceStream.write sourceDoc
+    conf.sourceStream = es.duplex [
+      es.through()
+      es.readArray [sourceDoc]
+    ]...
+
+    am = new AutoMerger conf
+
+    am.on 'target-not-ready', (doc) ->
+      assert.ok doc, 'document not ready as expected'
+      assert.ok savedTarget
+      done()
+
