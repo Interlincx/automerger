@@ -27,12 +27,12 @@ module.exports = AutoMerger = (opts) ->
   for key in optKeys
     this[key] = opts[key] if opts[key]
 
-  @saveStream = es.map @worker.bind this
 
   for subStream in @subscriberStreams
     @saveStream.pipe subStream
 
-  @sourceStream.pipe @saveStream
+  @workerStream = es.map @worker.bind this
+  @sourceStream.pipe @workerStream
 
   return this
 
