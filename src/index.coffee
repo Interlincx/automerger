@@ -3,6 +3,7 @@ util            = require 'util'
 
 deepExtend = require 'deep-extend'
 es = require 'event-stream'
+async = require 'async'
 
 
 schema = require './schema'
@@ -18,20 +19,16 @@ module.exports = AutoMerger = (opts) ->
     'alterSource', 'db', 'migrator'
     'readyProperties', 'rejectSource', 'schema'
     'sourceStream', 'sourceToIdPieces'
-    'subscriberStreams', 'version', 'destroyHook'
+    'subscriberQueues', 'version', 'destroyHook'
   ]
 
-  @subscriberStreams ?= []
+  @subscriberQueues ?= []
 
   for key in optKeys
     this[key] = opts[key] if opts[key]
 
-  @saveStream = es.map @worker.bind this
-
-  for subStream in @subscriberStreams
-    @saveStream.pipe subStream
-
-  @sourceStream.pipe @saveStream
+  @workerStream = es.map @worker.bind this
+  @sourceStream.pipe @workerStream
 
   return this
 
@@ -122,15 +119,6 @@ AutoMerger::getTargets = (id, callback) ->
     callback err, curTarget, prevTarget
 
 AutoMerger::save = (curTarget, callback) ->
-
-  curTarget.version = @version
-
-  if curTarget.createdAt? and typeof curTarget.createdAt is 'string'
-    curTarget.createdAt = new Date(curTarget.createdAt)
-
-  if curTarget.updatedAt? and typeof curTarget.updatedAt is 'string'
-    curTarget.updatedAt = new Date(curTarget.updatedAt)
-
   @db.upsert curTarget._id, curTarget, callback
 
 AutoMerger::piecesToId = (pieces) ->
@@ -169,6 +157,15 @@ AutoMerger::getAction = (curTarget, prevTarget) ->
 
   return action
 
+AutoMerger::setStampVersion = (doc) ->
+  doc.version = @version
+
+  if doc.createdAt? and typeof doc.createdAt is 'string'
+    doc.createdAt = new Date(doc.createdAt)
+
+  if doc.updatedAt? and typeof doc.updatedAt is 'string'
+    doc.updatedAt = new Date(doc.updatedAt)
+
 AutoMerger::worker = (sources, callback) ->
   self = this
   {current, previous} = sources
@@ -191,8 +188,8 @@ AutoMerger::worker = (sources, callback) ->
   id = @piecesToId idPieces
 
   unless id?
-    callback()
-    return @emit 'source-reject', curSource
+    @emit 'source-reject', curSource
+    return callback()
 
   @getTargets id, (err, curTarget, prevTarget) ->
 
@@ -203,26 +200,34 @@ AutoMerger::worker = (sources, callback) ->
 
     targetChanged = self.merge mergeOpts
 
-    if targetChanged
-      model = self.model
-      action = self.getAction curTarget, prevTarget
-
-      self.save curTarget, (err) ->
-        return callback err if err
-
-        if action is 'target-not-ready'
-          self.emit 'target-not-ready', curTarget
-          # save but do not tell subscribers
-          return callback()
-
-        callback null,
-          action: action
-          current: curTarget
-          previous: prevTarget
-          name: self.db.name
-
-    else
+    if !targetChanged
       self.emit 'source-reject', curSource
-      callback()
+      return callback()
+
+    model = self.model
+    action = self.getAction curTarget, prevTarget
+
+    self.setStampVersion curTarget
+
+    if action is 'target-not-ready'
+      return self.save curTarget, (err) ->
+        self.emit action, curTarget
+        callback err
+
+    if self.subscriberQueues.length is 0
+      return self.save curTarget, callback
+
+    subMsg =
+      action: action
+      current: curTarget
+      previous: prevTarget
+      name: self.db.name
+
+    async.each self.subscriberQueues, (queue, cb) ->
+      queue.push subMsg, cb
+
+    , (err) ->
+      return callback err if err
+      self.save curTarget, callback
 
 AutoMerger::close = -> @sourceStream.emit 'end'

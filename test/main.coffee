@@ -17,57 +17,25 @@ describe 'AutoMerger', ->
     assert.ok am
     assert.ok am instanceof AutoMerger
 
-  it 'should push to three subscribers', (done) ->
-    subWriteCount = 0
-    checklist =
-      stream1: false
-      stream2: false
-      stream3: false
-
-    getSubStream = (name) ->
-      write = ->
-        subWriteCount += 1
-        checklist[name] = if checklist[name] then false else true
-
-        if subWriteCount is 3
-          assert.ok checklist.stream1
-          assert.ok checklist.stream2
-          assert.ok checklist.stream3
-          done()
-
-      return es.through write
-
-    conf = getBasicConfig()
-    conf.subscriberStreams = ((getSubStream "stream#{i}") for i in [1..3])
-
-    sourceDoc =
-      current: {keyPart1: 'none', keyPart2: 'name'}
-
-    conf.sourceStream = es.duplex [
-      es.through()
-      es.readArray [sourceDoc]
-    ]...
-
-    am = new AutoMerger conf
-
   it 'should push to a subscriber', (done) ->
 
-    onJob = (job) ->
-
-      assert.equal job.action, 'create'
-      assert.equal job.name, 'test-model'
-
-      doc = job.current
-      assert.equal doc._id, 'none!name'
-      assert.ok doc.createdAt
-      assert.equal doc.keyPart1, 'none'
-      assert.equal doc.keyPart2, 'name'
-      assert.equal doc.version, 'test-version'
-
-      done()
-
     conf = getBasicConfig()
-    conf.subscriberStreams.push es.through onJob
+
+    subQueue =
+      push: (job, cb) ->
+        assert.equal job.action, 'create'
+        assert.equal job.name, 'test-model'
+
+        doc = job.current
+        assert.equal doc._id, 'none!name'
+        assert.ok doc.createdAt
+        assert.equal doc.keyPart1, 'none'
+        assert.equal doc.keyPart2, 'name'
+        assert.equal doc.version, 'test-version'
+
+        done()
+
+    conf.subscriberQueues.push subQueue
 
     sourceDoc =
       current: {keyPart1: 'none', keyPart2: 'name'}
@@ -79,7 +47,34 @@ describe 'AutoMerger', ->
 
     am = new AutoMerger conf
 
-  it 'should write cbId to sourceStream on db save', (done) ->
+  it 'should push to three subscribers', (done) ->
+    checklist = {}
+
+    getQueue = (name) ->
+      minimalQueueStub =
+        push: (item, cb) ->
+          checklist[name] = true
+          if checklist.q1 and checklist.q2 and checklist.q3
+            assert.ok 'all subscriber queues received message'
+            done()
+
+      return minimalQueueStub
+
+
+    conf = getBasicConfig()
+    conf.subscriberQueues = ((getQueue "q#{i}") for i in [1..3])
+
+    sourceDoc =
+      current: {keyPart1: 'none', keyPart2: 'name'}
+
+    conf.sourceStream = es.duplex [
+      es.through()
+      es.readArray [sourceDoc]
+    ]...
+
+    am = new AutoMerger conf
+
+  it 'should write cbId to sourceStream after db save', (done) ->
 
     conf = getBasicConfig()
 
@@ -103,12 +98,15 @@ describe 'AutoMerger', ->
     # an existing document is returned by `find`
     conf.db.find = (id, cb) -> cb null, existingDoc
 
-    conf.subscriberStreams.push es.through (job) ->
-      # subscriptionStream receives the migrated document
-      assert.equal job.current.field2, 'sure'
-      assert.equal job.current.field3, true
+    sub =
+      push: (job) ->
+        # subscriptionStream receives the migrated document
+        assert.equal job.current.field2, 'sure'
+        assert.equal job.current.field3, true
 
-      done()
+        done()
+
+    conf.subscriberQueues.push sub
 
     conf.migrator = (doc) ->
       # check initial state
@@ -151,7 +149,8 @@ describe 'AutoMerger', ->
 
     conf = getBasicConfig()
     conf.db.upsert = onUpsert
-    conf.subscriberStreams.push es.through onJob
+
+    conf.subscriberQueues.push push: onJob
 
     sourceDoc =
       current: {keyPart1: 'none', keyPart2: 'name'}
@@ -192,7 +191,7 @@ describe 'AutoMerger', ->
     conf = getBasicConfig()
     conf.db.upsert = onUpsert
     conf.db.find = (id, cb) -> cb null, originalTarget
-    conf.subscriberStreams.push es.through onJob
+    conf.subscriberQueues.push push: onJob
 
     sourceDoc =
       current:
@@ -211,7 +210,7 @@ describe 'AutoMerger', ->
     conf = getBasicConfig()
     conf.rejectSource = (doc) -> return true # always reject
     conf.db.upsert = -> assert.fail 'should not save a rejected document'
-    conf.subscriberStreams.push es.through ->
+    conf.subscriberQueues.push push: ->
       assert.fail 'should not notify subscribers of rejected docs'
 
     sourceDoc =
@@ -234,7 +233,7 @@ describe 'AutoMerger', ->
   it 'model should emit "source-reject" with incomplete id', (done) ->
     conf = getBasicConfig()
     conf.db.upsert = -> assert.fail 'should not save a rejected document'
-    conf.subscriberStreams.push es.through ->
+    conf.subscriberQueues.push push: ->
       assert.fail 'should not notify subscribers of rejected docs'
 
     sourceDoc =
@@ -261,7 +260,7 @@ describe 'AutoMerger', ->
     conf.db.find = (id, cb) -> cb null, originalTarget
     conf.db.upsert = -> assert.fail 'should not save a rejected document'
 
-    conf.subscriberStreams.push es.through ->
+    conf.subscriberQueues.push push: ->
       assert.fail 'should not notify subscribers of rejected docs'
 
     sourceDoc =
@@ -291,7 +290,7 @@ describe 'AutoMerger', ->
       assert.ok doc
       cb null
 
-    conf.subscriberStreams.push es.through ->
+    conf.subscriberQueues.push push: ->
       assert.fail 'should not notify subscribers of unready docs'
 
     sourceDoc =
