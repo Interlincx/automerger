@@ -3,6 +3,7 @@ util            = require 'util'
 
 deepExtend = require 'deep-extend'
 es = require 'event-stream'
+async = require 'async'
 
 
 schema = require './schema'
