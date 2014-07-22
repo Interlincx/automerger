@@ -123,15 +123,6 @@ AutoMerger::getTargets = (id, callback) ->
     callback err, curTarget, prevTarget
 
 AutoMerger::save = (curTarget, callback) ->
-
-  curTarget.version = @version
-
-  if curTarget.createdAt? and typeof curTarget.createdAt is 'string'
-    curTarget.createdAt = new Date(curTarget.createdAt)
-
-  if curTarget.updatedAt? and typeof curTarget.updatedAt is 'string'
-    curTarget.updatedAt = new Date(curTarget.updatedAt)
-
   @db.upsert curTarget._id, curTarget, callback
 
 AutoMerger::piecesToId = (pieces) ->
@@ -169,6 +160,15 @@ AutoMerger::getAction = (curTarget, prevTarget) ->
       action = 'target-not-ready'
 
   return action
+
+AutoMerger::setStampVersion = (doc) ->
+  doc.version = @version
+
+  if doc.createdAt? and typeof doc.createdAt is 'string'
+    doc.createdAt = new Date(doc.createdAt)
+
+  if doc.updatedAt? and typeof doc.updatedAt is 'string'
+    doc.updatedAt = new Date(doc.updatedAt)
 
 AutoMerger::worker = (sources, callback) ->
   self = this
