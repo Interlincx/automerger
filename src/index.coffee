@@ -19,17 +19,13 @@ module.exports = AutoMerger = (opts) ->
     'alterSource', 'db', 'migrator'
     'readyProperties', 'rejectSource', 'schema'
     'sourceStream', 'sourceToIdPieces'
-    'subscriberStreams', 'version', 'destroyHook'
+    'subscriberQueues', 'version', 'destroyHook'
   ]
 
-  @subscriberStreams ?= []
+  @subscriberQueues ?= []
 
   for key in optKeys
     this[key] = opts[key] if opts[key]
-
-
-  for subStream in @subscriberStreams
-    @saveStream.pipe subStream
 
   @workerStream = es.map @worker.bind this
   @sourceStream.pipe @workerStream
@@ -192,8 +188,8 @@ AutoMerger::worker = (sources, callback) ->
   id = @piecesToId idPieces
 
   unless id?
-    callback()
-    return @emit 'source-reject', curSource
+    @emit 'source-reject', curSource
+    return callback()
 
   @getTargets id, (err, curTarget, prevTarget) ->
 
@@ -204,26 +200,34 @@ AutoMerger::worker = (sources, callback) ->
 
     targetChanged = self.merge mergeOpts
 
-    if targetChanged
-      model = self.model
-      action = self.getAction curTarget, prevTarget
-
-      self.save curTarget, (err) ->
-        return callback err if err
-
-        if action is 'target-not-ready'
-          self.emit 'target-not-ready', curTarget
-          # save but do not tell subscribers
-          return callback()
-
-        callback null,
-          action: action
-          current: curTarget
-          previous: prevTarget
-          name: self.db.name
-
-    else
+    if !targetChanged
       self.emit 'source-reject', curSource
-      callback()
+      return callback()
+
+    model = self.model
+    action = self.getAction curTarget, prevTarget
+
+    self.setStampVersion curTarget
+
+    if action is 'target-not-ready'
+      return self.save curTarget, (err) ->
+        self.emit action, curTarget
+        callback err
+
+    if self.subscriberQueues.length is 0
+      return self.save curTarget, callback
+
+    subMsg =
+      action: action
+      current: curTarget
+      previous: prevTarget
+      name: self.db.name
+
+    async.each self.subscriberQueues, (queue, cb) ->
+      queue.push subMsg, cb
+
+    , (err) ->
+      return callback err if err
+      self.save curTarget, callback
 
 AutoMerger::close = -> @sourceStream.emit 'end'

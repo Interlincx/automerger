@@ -11,6 +11,6 @@ module.exports = ->
     es.through()
   ]...
   sourceToIdPieces: (doc) -> [doc.keyPart1, doc.keyPart2]
-  subscriberStreams: []
+  subscriberQueues: []
   schema: ["keyPart1", "keyPart2", "nonKeyField"]
   version: "test-version"
