@@ -1,4 +1,12 @@
 
+2.0.0 / 2014-07-22
+==================
+
+ * subscriberStreams become subscriberQueues. save AFTER pushing to subscribers
+ * renamed saveStream to workerStream
+ * moved version, createdAt, updatedAt fields out of save to their own fn
+ * installed async dep
+
 1.4.0/ 2014-07-17
 ==================
 
